@@ -33,6 +33,9 @@
         </div>
       </div>
       <div class="header-actions">
+        <button class="icon-btn" id="headerInstallBtn" title="Pasang Aplikasi ke HP" aria-label="Pasang Aplikasi ke HP" style="display:none; color:var(--color-gold); font-size:14px; width:auto; border-radius:var(--radius-full); padding:0 12px; gap:4px;">
+          <span>📲</span> Pasang
+        </button>
         <button class="icon-btn" id="headerTocBtn" title="Daftar Isi" aria-label="Daftar Isi">
           📑
         </button>
@@ -190,6 +193,23 @@
           <button class="icon-btn close-modal-btn" style="color:var(--color-text);">✕</button>
         </div>
         <div class="sheet-body">
+          <!-- PWA Install Banner Card -->
+          <div class="setting-item" id="installPwaCard" style="background:var(--color-primary-soft); padding:14px; border-radius:var(--radius-md); border:1px solid var(--color-card-border); margin-bottom:14px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+              <span style="font-size:24px;">📱</span>
+              <div>
+                <div style="font-weight:800; font-size:14px; color:var(--color-primary);">Pasang Aplikasi di HP (PWA)</div>
+                <div style="font-size:11px; color:var(--color-text-muted);">Bisa dibuka offline tanpa kuota internet</div>
+              </div>
+            </div>
+            <button id="btnInstallPwa" class="counter-tap-btn" style="width:100%; justify-content:center; padding:10px; font-size:13px;">
+              📲 Pasang ke Layar Utama Sekarang
+            </button>
+            <div id="iosInstallHint" style="font-size:11px; color:var(--color-text-muted); margin-top:8px; line-height:1.4;">
+              💡 <b>Pengguna iPhone/Safari:</b> Ketuk tombol <b>Bagikan (Share ⎋)</b> di bawah, lalu pilih <b>"Tambah ke Layar Utama (+)"</b>.
+            </div>
+          </div>
+
           <!-- Theme Selection -->
           <div class="setting-item">
             <div class="setting-label">Tema Warna</div>

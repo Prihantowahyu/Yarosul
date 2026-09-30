@@ -1,24 +1,40 @@
 {
+  "id": "yarosul-dzikir-app",
   "name": "Ya Rosul - Majlis Dzikir & Ta'lim",
   "short_name": "Ya Rosul",
   "description": "Buku Dzikir & Ta'lim Ya Rosul - Ponpes Salafiyah Nurul Huda Pajaran Poncokusumo",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "window-controls-overlay"],
   "background_color": "#082820",
   "theme_color": "#0d3b2e",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
+  "categories": ["books", "lifestyle", "education"],
   "icons": [
     {
       "src": "assets/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "assets/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

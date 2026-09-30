@@ -844,8 +844,68 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================
-  // PWA Service Worker Registration
+  // PWA Install Prompt & Service Worker Registration
   // ==========================================
+  let deferredPrompt = null;
+  const headerInstallBtn = document.getElementById('headerInstallBtn');
+  const btnInstallPwa = document.getElementById('btnInstallPwa');
+  const installPwaCard = document.getElementById('installPwaCard');
+  const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+  const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+  if (isInStandaloneMode) {
+    if (headerInstallBtn) headerInstallBtn.style.display = 'none';
+    if (installPwaCard) {
+      installPwaCard.innerHTML = `
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:22px;">✅</span>
+          <div>
+            <div style="font-weight:700; font-size:13px; color:var(--color-primary);">Aplikasi Sudah Terpasang!</div>
+            <div style="font-size:11px; color:var(--color-text-muted);">Anda sedang menggunakan versi PWA standalone.</div>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (headerInstallBtn) headerInstallBtn.style.display = 'inline-flex';
+    if (btnInstallPwa) {
+      btnInstallPwa.style.display = 'block';
+    }
+  });
+
+  async function triggerPwaInstall() {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        showToast('Terima kasih telah memasang Ya Rosul!');
+        if (headerInstallBtn) headerInstallBtn.style.display = 'none';
+      }
+      deferredPrompt = null;
+    } else if (isIos) {
+      showToast('Ketuk tombol Share (⎋) di Safari lalu pilih "Tambah ke Layar Utama"');
+    } else {
+      showToast('Ketuk menu browser (titik 3) lalu pilih "Tambahkan ke Layar Utama"');
+    }
+  }
+
+  if (headerInstallBtn) {
+    headerInstallBtn.addEventListener('click', triggerPwaInstall);
+  }
+  if (btnInstallPwa) {
+    btnInstallPwa.addEventListener('click', triggerPwaInstall);
+  }
+
+  window.addEventListener('appinstalled', () => {
+    deferredPrompt = null;
+    if (headerInstallBtn) headerInstallBtn.style.display = 'none';
+    showToast('Aplikasi Ya Rosul berhasil terpasang di HP Anda!');
+  });
+
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js')
