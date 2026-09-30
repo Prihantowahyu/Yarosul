@@ -906,6 +906,179 @@ document.addEventListener('DOMContentLoaded', () => {
     showToast('Aplikasi Ya Rosul berhasil terpasang di HP Anda!');
   });
 
+  // ==========================================
+  // Wake Lock: Layar Tetap Menyala
+  // ==========================================
+  let wakeLock = null;
+  const wakeLockToggle = document.getElementById('wakeLockToggle');
+
+  async function requestWakeLock() {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => {
+          wakeLock = null;
+          if (wakeLockToggle) wakeLockToggle.checked = false;
+        });
+        showToast('🌙 Layar tetap menyala aktif');
+      } else {
+        showToast('Browser ini belum mendukung fitur Wake Lock');
+        if (wakeLockToggle) wakeLockToggle.checked = false;
+      }
+    } catch (err) {
+      showToast('Tidak dapat mengaktifkan mode layar menyala');
+      if (wakeLockToggle) wakeLockToggle.checked = false;
+    }
+  }
+
+  async function releaseWakeLock() {
+    if (wakeLock) {
+      try { await wakeLock.release(); } catch(e) {}
+      wakeLock = null;
+      showToast('🌙 Layar tetap menyala dimatikan');
+    }
+  }
+
+  if (wakeLockToggle) {
+    wakeLockToggle.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        requestWakeLock();
+      } else {
+        releaseWakeLock();
+      }
+    });
+  }
+
+  // Re-acquire wake lock if page becomes visible again (e.g. after screen off)
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState === 'visible' && wakeLockToggle && wakeLockToggle.checked && !wakeLock) {
+      await requestWakeLock();
+    }
+  });
+
+  // ==========================================
+  // Share Modal & QR Code
+  // ==========================================
+  const APP_URL = 'https://prihantowahyu.github.io/Yarosul/';
+  const WA_MSG = encodeURIComponent(
+    'Assalamu\'alaikum 🤲\n\n' +
+    'Yuk baca Dzikir & Ta\'lim Ya Rosul bersama! ' +
+    'Tersedia Ratibul Haddad, Surat Yasin, Al-Waqi\'ah, dan Tasbih Digital.\n\n' +
+    '📱 Bisa dipasang di HP (offline):\n' + APP_URL + '\n\n' +
+    'Dari: Ponpes Salafiyah Nurul Huda Pajaran - Poncokusumo Malang'
+  );
+
+  const shareModal = document.getElementById('shareModal');
+  const qrCodeCanvas = document.getElementById('qrCodeCanvas');
+  const shareUrlDisplay = document.getElementById('shareUrlDisplay');
+  let qrGenerated = false;
+
+  function openShareModal() {
+    if (shareModal) {
+      shareModal.classList.add('active');
+      document.body.classList.add('modal-open');
+      if (shareUrlDisplay) shareUrlDisplay.textContent = APP_URL;
+      // Generate QR code only once
+      if (!qrGenerated && qrCodeCanvas && typeof QRCode !== 'undefined') {
+        qrCodeCanvas.innerHTML = '';
+        new QRCode(qrCodeCanvas, {
+          text: APP_URL,
+          width: 200,
+          height: 200,
+          colorDark: '#0d3b2e',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+        qrGenerated = true;
+      }
+      // Show native share button if supported
+      const nativeShareBtn = document.getElementById('nativeShareBtn');
+      if (nativeShareBtn && navigator.share) {
+        nativeShareBtn.style.display = 'block';
+      }
+    }
+  }
+
+  const headerShareBtn = document.getElementById('headerShareBtn');
+  const shareWaBtn = document.getElementById('shareWaBtn');
+  const shareQrBtn = document.getElementById('shareQrBtn');
+  const shareToWaBtn = document.getElementById('shareToWaBtn');
+  const copyLinkBtn = document.getElementById('copyLinkBtn');
+  const nativeShareBtn = document.getElementById('nativeShareBtn');
+
+  if (headerShareBtn) {
+    headerShareBtn.addEventListener('click', () => {
+      // Close settings modal if open
+      const settingsModal = document.getElementById('settingsModal');
+      if (settingsModal && settingsModal.classList.contains('active')) {
+        settingsModal.classList.remove('active');
+        document.body.classList.remove('modal-open');
+      }
+      openShareModal();
+      triggerHaptic('tap');
+    });
+  }
+
+  if (shareWaBtn) {
+    shareWaBtn.addEventListener('click', () => {
+      window.open(`https://wa.me/?text=${WA_MSG}`, '_blank');
+      triggerHaptic('tap');
+    });
+  }
+
+  if (shareQrBtn) {
+    shareQrBtn.addEventListener('click', () => {
+      // Close settings, open share modal
+      const settingsModal = document.getElementById('settingsModal');
+      if (settingsModal && settingsModal.classList.contains('active')) {
+        settingsModal.classList.remove('active');
+        document.body.classList.remove('modal-open');
+      }
+      openShareModal();
+      triggerHaptic('tap');
+    });
+  }
+
+  if (shareToWaBtn) {
+    shareToWaBtn.addEventListener('click', () => {
+      window.open(`https://wa.me/?text=${WA_MSG}`, '_blank');
+      triggerHaptic('tap');
+    });
+  }
+
+  if (copyLinkBtn) {
+    copyLinkBtn.addEventListener('click', () => {
+      try {
+        navigator.clipboard.writeText(APP_URL).then(() => {
+          showToast('✅ Tautan berhasil disalin!');
+        });
+      } catch(e) {
+        // Fallback
+        const ta = document.createElement('textarea');
+        ta.value = APP_URL;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('✅ Tautan berhasil disalin!');
+      }
+      triggerHaptic('tap');
+    });
+  }
+
+  if (nativeShareBtn) {
+    nativeShareBtn.addEventListener('click', async () => {
+      try {
+        await navigator.share({
+          title: 'Ya Rosul – Majlis Dzikir & Ta\'lim',
+          text: 'Ayo baca Dzikir Ya Rosul bersama! Ratibul Haddad, Surat Yasin, Al-Waqi\'ah & Tasbih Digital.',
+          url: APP_URL
+        });
+      } catch(e) {}
+      triggerHaptic('tap');
+    });
+  }
+
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js')

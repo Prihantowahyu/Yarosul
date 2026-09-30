@@ -36,6 +36,9 @@
         <button class="icon-btn" id="headerInstallBtn" title="Pasang Aplikasi ke HP" aria-label="Pasang Aplikasi ke HP" style="display:none; color:var(--color-gold); font-size:14px; width:auto; border-radius:var(--radius-full); padding:0 12px; gap:4px;">
           <span>📲</span> Pasang
         </button>
+        <button class="icon-btn" id="headerShareBtn" title="Bagikan Aplikasi" aria-label="Bagikan Aplikasi">
+          📤
+        </button>
         <button class="icon-btn" id="headerTocBtn" title="Daftar Isi" aria-label="Daftar Isi">
           📑
         </button>
@@ -296,6 +299,34 @@
             </div>
           </div>
 
+          <!-- Wake Lock: Layar Tetap Menyala -->
+          <div class="setting-item">
+            <div class="setting-row">
+              <div>
+                <div class="setting-label">🌙 Layar Tetap Menyala</div>
+                <div class="setting-desc">Layar tidak mati otomatis saat membaca dzikir</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="wakeLockToggle">
+                <span class="slider-switch"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Bagikan Aplikasi -->
+          <div class="setting-item">
+            <div class="setting-label">📤 Bagikan Aplikasi</div>
+            <div class="setting-desc">Ajak jamaah lain menggunakan aplikasi ini</div>
+            <div style="display:flex; gap:8px; margin-top:10px;">
+              <button id="shareWaBtn" class="counter-tap-btn" style="flex:1; justify-content:center; background:#25d366; border-color:#128c7e; font-size:12px; padding:9px 6px;">
+                💬 WhatsApp
+              </button>
+              <button id="shareQrBtn" class="counter-tap-btn" style="flex:1; justify-content:center; font-size:12px; padding:9px 6px;">
+                📷 QR Code
+              </button>
+            </div>
+          </div>
+
           <!-- Reset All Counters -->
           <div class="setting-item" style="border-bottom:none; margin-top:8px;">
             <button id="resetAllCountersBtn" class="counter-tap-btn" style="width:100%; justify-content:center; background:#c0392b; border-color:#e74c3c;">
@@ -353,10 +384,54 @@
       </div>
     </div>
 
+    <!-- ============================================== -->
+    <!-- MODAL 4: QR CODE & SHARE                      -->
+    <!-- ============================================== -->
+    <div class="modal-backdrop" id="shareModal">
+      <div class="bottom-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <div class="sheet-title">
+            <span>📤</span> Bagikan Ya Rosul
+          </div>
+          <button class="icon-btn close-modal-btn" style="color:var(--color-text);">✕</button>
+        </div>
+        <div class="sheet-body" style="text-align:center; padding:16px;">
+          <!-- QR Code Canvas -->
+          <div style="margin-bottom:16px;">
+            <div style="font-size:13px; color:var(--color-text-muted); margin-bottom:12px;">Pindai QR Code ini untuk membuka Ya Rosul di HP lain:</div>
+            <div id="qrCodeCanvas" style="display:inline-block; padding:12px; background:#fff; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.25);"></div>
+          </div>
+
+          <!-- URL Display -->
+          <div id="shareUrlDisplay" style="font-size:11px; color:var(--color-text-muted); word-break:break-all; margin-bottom:16px; padding:8px; background:var(--color-primary-soft); border-radius:8px;"></div>
+
+          <!-- Share Buttons -->
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <button id="shareToWaBtn" class="counter-tap-btn" style="width:100%; justify-content:center; background:#25d366; border-color:#128c7e; font-size:14px; padding:12px;">
+              💬 Kirim via WhatsApp
+            </button>
+            <button id="copyLinkBtn" class="counter-tap-btn" style="width:100%; justify-content:center; font-size:14px; padding:12px;">
+              📋 Salin Tautan
+            </button>
+            <button id="nativeShareBtn" class="counter-tap-btn" style="width:100%; justify-content:center; font-size:14px; padding:12px; display:none;">
+              🔗 Bagikan via...
+            </button>
+          </div>
+
+          <p style="font-size:11px; color:var(--color-text-muted); margin-top:14px; line-height:1.5;">
+            <b>Assalamu'alaikum</b> — Ayo baca Dzikir Ya Rosul bersama lewat aplikasi mobile ini 🤲
+          </p>
+        </div>
+      </div>
+    </div>
+
     <!-- Floating Toast Notification -->
     <div class="toast-msg" id="toastMsg"></div>
   </div>
 
+  <!-- QR Code Library (offline-friendly, tiny) -->
+  <script src="js/qrcode.min.js"></script>
   <!-- Content & App Scripts -->
   <script src="data/content.js"></script>
   <script src="js/app.js"></script>
