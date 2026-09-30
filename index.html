@@ -64,6 +64,12 @@
             <button class="tool-pill-btn" id="zoomBtn" title="Perbesar Tampilan">
               🔍 1x
             </button>
+            <button class="tool-pill-btn" id="paperToneBtn" title="Ganti Nuansa Kertas (Asli / Sepia Hangat / Mode Malam)">
+              ☀️ Asli
+            </button>
+            <button class="tool-pill-btn" id="bookmarkBtn" title="Tandai Halaman Ini (Bookmark)">
+              🔖 Tandai
+            </button>
             <button class="tool-pill-btn" id="bookFullscreenBtn" title="Mode Layar Penuh (Fokus Baca)">
               ⛶ Penuh
             </button>
@@ -71,7 +77,11 @@
 
           <!-- Page Wrapper for Zoom and Swiping -->
           <div class="book-page-wrapper" id="bookPageWrapper">
-            <img src="assets/pages/page_1.webp" alt="Halaman Buku" id="bookPageImg" class="book-page-img">
+            <!-- Luxury Ribbon Bookmark Indicator -->
+            <div class="book-bookmark-ribbon" id="bookmarkRibbon" title="Halaman ini ditandai" style="display:none;">
+              <span class="ribbon-icon">🔖</span>
+            </div>
+            <img src="assets/pages/page_1.webp" alt="Halaman Buku" id="bookPageImg" class="book-page-img paper-tone-normal">
           </div>
 
           <!-- Touch Tap Zones (Left/Right) -->
@@ -90,9 +100,9 @@
             <div class="current-chapter-tag" id="currentChapterTag">
               <span>📖</span> Cover Depan
             </div>
-            <div class="page-indicator-badge" id="pageIndicator">
-              1 / 48
-            </div>
+            <button class="page-indicator-badge interactive" id="pageIndicator" title="Ketuk untuk lompat langsung ke halaman" aria-label="Lompat ke halaman">
+              1 / 48 ▾
+            </button>
           </div>
 
           <!-- Slider Scrubber Navigation -->
@@ -172,19 +182,67 @@
     </nav>
 
     <!-- ============================================== -->
-    <!-- MODAL 1: DAFTAR ISI (TABLE OF CONTENTS)        -->
+    <!-- MODAL 1: DAFTAR ISI & NAVIGASI BUKU            -->
     <!-- ============================================== -->
     <div class="modal-backdrop" id="tocModal">
-      <div class="bottom-sheet">
+      <div class="bottom-sheet toc-sheet">
         <div class="sheet-handle"></div>
         <div class="sheet-header">
           <div class="sheet-title">
-            <span>📑</span> Daftar Isi Buku
+            <span>📑</span> Navigasi & Daftar Isi
           </div>
           <button class="icon-btn close-modal-btn" style="color:var(--color-text);">✕</button>
         </div>
+        <div class="toc-tabs-nav" id="tocTabsNav">
+          <button class="toc-tab-btn active" data-tab="chapters">
+            <span>📑</span> Daftar Bab
+          </button>
+          <button class="toc-tab-btn" data-tab="thumbnails">
+            <span>🖼️</span> Galeri (48)
+          </button>
+          <button class="toc-tab-btn" data-tab="bookmarks">
+            <span>🔖</span> Penanda (<span id="bookmarkCountBadge">0</span>)
+          </button>
+        </div>
         <div class="sheet-body" id="tocList">
-          <!-- Rendered by JS -->
+          <!-- Rendered dynamically by JS based on active tab -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL: LOMPAT KE HALAMAN (JUMP TO PAGE)        -->
+    <!-- ============================================== -->
+    <div class="modal-backdrop" id="jumpModal">
+      <div class="bottom-sheet jump-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <div class="sheet-title">
+            <span>🎯</span> Lompat ke Halaman
+          </div>
+          <button class="icon-btn close-modal-btn" style="color:var(--color-text);">✕</button>
+        </div>
+        <div class="sheet-body">
+          <div class="jump-dialog-content">
+            <div class="jump-input-card">
+              <label for="jumpPageInput" class="jump-label">Masukkan Nomor Halaman (1 - 48):</label>
+              <div class="jump-input-row">
+                <button class="jump-step-btn" id="jumpStepMinus5" title="Mundur 5 halaman">-5</button>
+                <button class="jump-step-btn" id="jumpStepMinus1" title="Mundur 1 halaman">-1</button>
+                <input type="number" id="jumpPageInput" min="1" max="48" value="1" class="jump-number-input" inputmode="numeric">
+                <button class="jump-step-btn" id="jumpStepPlus1" title="Maju 1 halaman">+1</button>
+                <button class="jump-step-btn" id="jumpStepPlus5" title="Maju 5 halaman">+5</button>
+              </div>
+              <button id="btnConfirmJump" class="jump-action-btn">
+                Buka Halaman Ini ➔
+              </button>
+            </div>
+
+            <div class="jump-section-title">Pintas Bab Utama</div>
+            <div class="jump-shortcuts-grid" id="jumpShortcuts">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -221,8 +279,8 @@
 
           <!-- Theme Selection -->
           <div class="setting-item">
-            <div class="setting-label">Tema Warna</div>
-            <div class="setting-desc">Pilih suasana tampilan membaca yang paling nyaman</div>
+            <div class="setting-label">Tema Aplikasi</div>
+            <div class="setting-desc">Pilih suasana tampilan aplikasi yang paling nyaman</div>
             <div class="theme-options">
               <button class="theme-btn active" data-theme="emerald">
                 <div class="theme-circle emerald"></div>
@@ -235,6 +293,26 @@
               <button class="theme-btn" data-theme="sepia">
                 <div class="theme-circle sepia"></div>
                 <span>Sepia Ivory</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Nuansa Kertas Buku Scan (Eye Comfort) -->
+          <div class="setting-item">
+            <div class="setting-label">🎨 Nuansa Kertas Buku (Scan HD)</div>
+            <div class="setting-desc">Filter kenyamanan mata khusus gambar buku scan asli</div>
+            <div class="theme-options" id="paperToneOptions">
+              <button class="tone-btn active" data-tone="normal">
+                <div class="tone-circle normal"></div>
+                <span>☀️ Asli</span>
+              </button>
+              <button class="tone-btn" data-tone="sepia">
+                <div class="tone-circle sepia"></div>
+                <span>📜 Krem Hangat</span>
+              </button>
+              <button class="tone-btn" data-tone="dark">
+                <div class="tone-circle dark"></div>
+                <span>🌙 Mode Malam</span>
               </button>
             </div>
           </div>

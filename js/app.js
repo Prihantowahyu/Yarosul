@@ -22,7 +22,9 @@ document.addEventListener('DOMContentLoaded', () => {
     freeTasbih: {
       count: parseInt(localStorage.getItem('yarosul_free_count')) || 0,
       target: parseInt(localStorage.getItem('yarosul_free_target')) || 33
-    }
+    },
+    paperTone: localStorage.getItem('yarosul_paper_tone') || 'normal', // 'normal' | 'sepia' | 'dark'
+    bookmarks: JSON.parse(localStorage.getItem('yarosul_bookmarks') || '[]')
   };
 
   const TOTAL_PAGES = YAROSUL_DATA.meta.totalPages || 48;
@@ -111,6 +113,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const zoomBtn = document.getElementById('zoomBtn');
   const chapterChips = document.getElementById('chapterChips');
 
+  // Reading Comfort & Navigation elements
+  const paperToneBtn = document.getElementById('paperToneBtn');
+  const bookmarkBtn = document.getElementById('bookmarkBtn');
+  const bookmarkRibbon = document.getElementById('bookmarkRibbon');
+  const bookmarkCountBadge = document.getElementById('bookmarkCountBadge');
+  const jumpModal = document.getElementById('jumpModal');
+  const jumpPageInput = document.getElementById('jumpPageInput');
+  const btnConfirmJump = document.getElementById('btnConfirmJump');
+  const jumpStepMinus5 = document.getElementById('jumpStepMinus5');
+  const jumpStepMinus1 = document.getElementById('jumpStepMinus1');
+  const jumpStepPlus1 = document.getElementById('jumpStepPlus1');
+  const jumpStepPlus5 = document.getElementById('jumpStepPlus5');
+  const jumpShortcuts = document.getElementById('jumpShortcuts');
+  const tocTabsNav = document.getElementById('tocTabsNav');
+
   // Digital View elements
   const digitalTabs = document.getElementById('digitalTabs');
   const digitalContentArea = document.getElementById('digitalContentArea');
@@ -127,6 +144,83 @@ document.addEventListener('DOMContentLoaded', () => {
   const settingsModal = document.getElementById('settingsModal');
   const tasbihModal = document.getElementById('tasbihModal');
   const toastMsg = document.getElementById('toastMsg');
+
+  // ==========================================
+  // Reading Comfort: Paper Tones (Scan Filter)
+  // ==========================================
+  function applyPaperTone(tone) {
+    state.paperTone = tone;
+    localStorage.setItem('yarosul_paper_tone', tone);
+    if (bookPageImg) {
+      bookPageImg.classList.remove('paper-tone-normal', 'paper-tone-sepia', 'paper-tone-dark');
+      bookPageImg.classList.add(`paper-tone-${tone}`);
+    }
+    if (paperToneBtn) {
+      if (tone === 'normal') {
+        paperToneBtn.innerHTML = '☀️ Asli';
+        paperToneBtn.title = 'Nuansa Kertas: Asli (Ketuk untuk ganti)';
+      } else if (tone === 'sepia') {
+        paperToneBtn.innerHTML = '📜 Sepia';
+        paperToneBtn.title = 'Nuansa Kertas: Krem Hangat (Ketuk untuk ganti)';
+      } else if (tone === 'dark') {
+        paperToneBtn.innerHTML = '🌙 Malam';
+        paperToneBtn.title = 'Nuansa Kertas: Mode Malam Invert (Ketuk untuk ganti)';
+      }
+    }
+    document.querySelectorAll('.tone-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.tone === tone);
+    });
+  }
+
+  function cyclePaperTone() {
+    const tones = ['normal', 'sepia', 'dark'];
+    const nextIdx = (tones.indexOf(state.paperTone) + 1) % tones.length;
+    const nextTone = tones[nextIdx];
+    applyPaperTone(nextTone);
+    const names = { normal: 'Scan Asli ☀️', sepia: 'Krem Hangat (Sepia) 📜', dark: 'Mode Malam (Invert) 🌙' };
+    showToast(`Nuansa kertas: ${names[nextTone]}`);
+    triggerHaptic('tap');
+  }
+
+  // ==========================================
+  // Bookmarks & Ribbon Indicator
+  // ==========================================
+  function isBookmarked(pageNum) {
+    return state.bookmarks.includes(pageNum);
+  }
+
+  function updateBookmarkUI() {
+    const bookmarked = isBookmarked(state.currentPage);
+    if (bookmarkRibbon) {
+      bookmarkRibbon.style.display = bookmarked ? 'flex' : 'none';
+    }
+    if (bookmarkBtn) {
+      bookmarkBtn.classList.toggle('active-bookmark', bookmarked);
+      bookmarkBtn.innerHTML = bookmarked ? '🔖 Tersimpan' : '🔖 Tandai';
+      bookmarkBtn.title = bookmarked ? 'Halaman ini ditandai (Ketuk untuk hapus)' : 'Tandai Halaman Ini (Bookmark)';
+    }
+    if (bookmarkCountBadge) {
+      bookmarkCountBadge.textContent = state.bookmarks.length;
+    }
+  }
+
+  function toggleBookmark(pageNum = state.currentPage) {
+    const idx = state.bookmarks.indexOf(pageNum);
+    if (idx !== -1) {
+      state.bookmarks.splice(idx, 1);
+      showToast(`Penanda halaman ${pageNum} dihapus`);
+    } else {
+      state.bookmarks.push(pageNum);
+      state.bookmarks.sort((a, b) => a - b);
+      showToast(`🔖 Halaman ${pageNum} disimpan di Penanda!`);
+    }
+    localStorage.setItem('yarosul_bookmarks', JSON.stringify(state.bookmarks));
+    updateBookmarkUI();
+    if (tocModal && tocModal.classList.contains('open') && currentTocTab === 'bookmarks') {
+      renderTocBookmarks();
+    }
+    triggerHaptic('tap');
+  }
 
   // ==========================================
   // Theme & Settings Handlers
@@ -197,8 +291,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update UI elements
     const ch = getChapterForPage(pageNum);
     currentChapterTag.innerHTML = `<span>${ch.icon}</span> ${ch.title}`;
-    pageIndicator.textContent = `${pageNum} / ${TOTAL_PAGES}`;
+    pageIndicator.innerHTML = `${pageNum} / ${TOTAL_PAGES} <span style="font-size:10px; opacity:0.75;">▾</span>`;
     bookRange.value = pageNum;
+
+    // Update bookmark ribbon & button
+    updateBookmarkUI();
+    if (jumpPageInput) {
+      jumpPageInput.value = pageNum;
+    }
 
     // Update image with soft fade
     bookPageImg.style.opacity = '0.4';
@@ -346,6 +446,117 @@ document.addEventListener('DOMContentLoaded', () => {
   prevPageBtn.addEventListener('click', () => prevPage());
   nextPageBtn.addEventListener('click', () => nextPage());
   zoomBtn.addEventListener('click', () => toggleZoom());
+
+  // Reading Comfort tools
+  if (paperToneBtn) {
+    paperToneBtn.addEventListener('click', () => cyclePaperTone());
+  }
+  if (bookmarkBtn) {
+    bookmarkBtn.addEventListener('click', () => toggleBookmark());
+  }
+
+  // Interactive page indicator badge opens jump to page dialog
+  if (pageIndicator) {
+    pageIndicator.addEventListener('click', () => openJumpModal());
+  }
+
+  // ==========================================
+  // Jump to Page Dialog Handlers
+  // ==========================================
+  function openJumpModal() {
+    if (jumpPageInput) {
+      jumpPageInput.value = state.currentPage;
+    }
+    renderJumpShortcuts();
+    openModal(jumpModal);
+    setTimeout(() => {
+      if (jumpPageInput) jumpPageInput.select();
+    }, 200);
+    triggerHaptic('tap');
+  }
+
+  function renderJumpShortcuts() {
+    if (!jumpShortcuts) return;
+    jumpShortcuts.innerHTML = '';
+    const shortcuts = [
+      { title: 'Cover', page: 1, icon: '📖' },
+      { title: 'Muqaddimah', page: 3, icon: '📜' },
+      { title: 'Surat Yasin', page: 6, icon: '✨' },
+      { title: 'Al-Waqi\'ah', page: 19, icon: '🌟' },
+      { title: 'Ratibul Haddad', page: 26, icon: '📿' },
+      { title: 'Doa Ratib', page: 42, icon: '🤲' },
+      { title: 'Fadhilah', page: 46, icon: '💎' },
+      { title: 'Halaman Akhir', page: 48, icon: '🏁' }
+    ];
+
+    shortcuts.forEach(item => {
+      const btn = document.createElement('button');
+      btn.className = 'jump-chip-btn';
+      btn.innerHTML = `
+        <span class="jump-chip-title"><span>${item.icon}</span> ${item.title}</span>
+        <span class="jump-chip-badge">Hal ${item.page}</span>
+      `;
+      btn.addEventListener('click', () => {
+        closeModals();
+        loadBookPage(item.page, true);
+        if (state.activeMode !== 'book') switchMode('book');
+        triggerHaptic('tap');
+      });
+      jumpShortcuts.appendChild(btn);
+    });
+  }
+
+  function handleJumpSubmit() {
+    if (!jumpPageInput) return;
+    const val = parseInt(jumpPageInput.value, 10);
+    if (!isNaN(val)) {
+      const clamped = Math.max(1, Math.min(TOTAL_PAGES, val));
+      closeModals();
+      loadBookPage(clamped, true);
+      if (state.activeMode !== 'book') switchMode('book');
+      triggerHaptic('tap');
+    }
+  }
+
+  if (btnConfirmJump) {
+    btnConfirmJump.addEventListener('click', handleJumpSubmit);
+  }
+  if (jumpPageInput) {
+    jumpPageInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        handleJumpSubmit();
+      }
+    });
+  }
+
+  if (jumpStepMinus5) {
+    jumpStepMinus5.addEventListener('click', () => {
+      const cur = parseInt(jumpPageInput.value, 10) || 1;
+      jumpPageInput.value = Math.max(1, cur - 5);
+      triggerHaptic('tap');
+    });
+  }
+  if (jumpStepMinus1) {
+    jumpStepMinus1.addEventListener('click', () => {
+      const cur = parseInt(jumpPageInput.value, 10) || 1;
+      jumpPageInput.value = Math.max(1, cur - 1);
+      triggerHaptic('tap');
+    });
+  }
+  if (jumpStepPlus1) {
+    jumpStepPlus1.addEventListener('click', () => {
+      const cur = parseInt(jumpPageInput.value, 10) || 1;
+      jumpPageInput.value = Math.min(TOTAL_PAGES, cur + 1);
+      triggerHaptic('tap');
+    });
+  }
+  if (jumpStepPlus5) {
+    jumpStepPlus5.addEventListener('click', () => {
+      const cur = parseInt(jumpPageInput.value, 10) || 1;
+      jumpPageInput.value = Math.min(TOTAL_PAGES, cur + 5);
+      triggerHaptic('tap');
+    });
+  }
 
   // Center tap on book canvas in fullscreen toggles Zen mode (hides bottom scrubber)
   canvasArea.addEventListener('click', (e) => {
@@ -647,10 +858,29 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ==========================================
-  // Table of Contents Modal
   // ==========================================
-  function renderTocList() {
+  // Table of Contents & Navigation Modal (Multi-Tabs)
+  // ==========================================
+  let currentTocTab = 'chapters';
+
+  function switchTocTab(tab) {
+    currentTocTab = tab;
+    document.querySelectorAll('.toc-tab-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+    if (tab === 'chapters') {
+      renderTocChapters();
+    } else if (tab === 'thumbnails') {
+      renderTocThumbnails();
+    } else if (tab === 'bookmarks') {
+      renderTocBookmarks();
+    }
+    triggerHaptic('tap');
+  }
+
+  function renderTocChapters() {
     const tocList = document.getElementById('tocList');
+    if (!tocList) return;
     tocList.innerHTML = '';
 
     YAROSUL_DATA.chapters.forEach(ch => {
@@ -677,6 +907,111 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       tocList.appendChild(item);
+    });
+  }
+
+  function renderTocThumbnails() {
+    const tocList = document.getElementById('tocList');
+    if (!tocList) return;
+    tocList.innerHTML = '';
+
+    const grid = document.createElement('div');
+    grid.className = 'thumbnails-grid';
+
+    for (let i = 1; i <= TOTAL_PAGES; i++) {
+      const ch = getChapterForPage(i);
+      const isCur = (i === state.currentPage);
+      const isBm = isBookmarked(i);
+
+      const card = document.createElement('div');
+      card.className = `thumb-card ${isCur ? 'current-page' : ''}`;
+      card.innerHTML = `
+        <div class="thumb-img-wrap">
+          <img src="assets/pages/page_${i}.webp" loading="lazy" alt="Halaman ${i}" class="thumb-img">
+          <span class="thumb-badge">Hal ${i}</span>
+          ${isBm ? '<span class="thumb-bookmark-icon">🔖</span>' : ''}
+        </div>
+        <div class="thumb-meta">
+          <div class="thumb-title">${ch.title}</div>
+        </div>
+      `;
+
+      card.addEventListener('click', () => {
+        closeModals();
+        loadBookPage(i, true);
+        if (state.activeMode !== 'book') switchMode('book');
+        triggerHaptic('tap');
+      });
+
+      grid.appendChild(card);
+    }
+
+    tocList.appendChild(grid);
+  }
+
+  function renderTocBookmarks() {
+    const tocList = document.getElementById('tocList');
+    if (!tocList) return;
+    tocList.innerHTML = '';
+
+    if (state.bookmarks.length === 0) {
+      tocList.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">🔖</div>
+          <div class="empty-state-text">Belum Ada Penanda</div>
+          <div class="empty-state-sub">Ketuk tombol <b>"🔖 Tandai"</b> saat membaca untuk menyimpan halaman penting Anda di sini.</div>
+        </div>
+      `;
+      return;
+    }
+
+    const list = document.createElement('div');
+    list.className = 'bookmarks-list';
+
+    state.bookmarks.forEach(page => {
+      const ch = getChapterForPage(page);
+      const item = document.createElement('div');
+      item.className = 'bookmark-item';
+      item.innerHTML = `
+        <div class="bookmark-item-left">
+          <span class="bookmark-item-ribbon">🔖</span>
+          <div>
+            <div class="bookmark-item-title">Halaman ${page}</div>
+            <div class="bookmark-item-meta">${ch.icon} ${ch.title}</div>
+          </div>
+        </div>
+        <div class="bookmark-item-actions">
+          <button class="bookmark-delete-btn" title="Hapus penanda" aria-label="Hapus penanda">🗑️</button>
+        </div>
+      `;
+
+      item.querySelector('.bookmark-item-left').addEventListener('click', () => {
+        closeModals();
+        loadBookPage(page, true);
+        if (state.activeMode !== 'book') switchMode('book');
+        triggerHaptic('tap');
+      });
+
+      item.querySelector('.bookmark-delete-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleBookmark(page);
+      });
+
+      list.appendChild(item);
+    });
+
+    tocList.appendChild(list);
+  }
+
+  function renderTocList() {
+    switchTocTab(currentTocTab);
+  }
+
+  if (tocTabsNav) {
+    tocTabsNav.querySelectorAll('.toc-tab-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        switchTocTab(e.currentTarget.dataset.tab);
+      });
     });
   }
 
@@ -804,6 +1139,17 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', (e) => {
       const theme = e.currentTarget.dataset.theme;
       applyTheme(theme);
+      triggerHaptic('tap');
+    });
+  });
+
+  // Paper Tone Option Buttons in Settings
+  document.querySelectorAll('.tone-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const tone = e.currentTarget.dataset.tone;
+      applyPaperTone(tone);
+      const names = { normal: 'Scan Asli ☀️', sepia: 'Krem Hangat (Sepia) 📜', dark: 'Mode Malam (Invert) 🌙' };
+      showToast(`Nuansa kertas: ${names[tone]}`);
       triggerHaptic('tap');
     });
   });
@@ -1241,6 +1587,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize App
   // ==========================================
   applyTheme(state.theme);
+  applyPaperTone(state.paperTone);
   renderChapterChips();
   updateFreeTasbihDisplay();
   applyFontSettings();
@@ -1252,6 +1599,14 @@ document.addEventListener('DOMContentLoaded', () => {
   preloadPage(3);
   preloadPage(state.currentPage);
   preloadPage(state.currentPage + 1);
+
+  // Auto-Resume notification if not on page 1
+  if (state.currentPage > 1) {
+    const ch = getChapterForPage(state.currentPage);
+    setTimeout(() => {
+      showToast(`📖 Terakhir dibaca: Hal ${state.currentPage} (${ch.title})`, 2800);
+    }, 600);
+  }
 
   console.log('Ya Rosul Mobile Web App Ready!');
 });

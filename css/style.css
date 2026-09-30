@@ -1404,3 +1404,494 @@ body.fullscreen-mode.book-active .floating-exit-fullscreen-btn {
   display: none !important;
 }
 
+/* ==========================================================================
+   READING COMFORT & ENHANCED NAVIGATION
+   ========================================================================== */
+
+/* 1. Paper Tones (Scan Eye Comfort) */
+.book-page-img.paper-tone-normal {
+  filter: none;
+  background-color: #ffffff;
+}
+
+.book-page-img.paper-tone-sepia {
+  filter: sepia(0.38) brightness(0.96) contrast(0.96);
+  background-color: #f7eedf;
+}
+
+.book-page-img.paper-tone-dark {
+  filter: invert(0.92) hue-rotate(180deg) brightness(0.88) contrast(1.12);
+  background-color: #121212;
+}
+
+/* 2. Bookmark Ribbon & Button */
+.book-bookmark-ribbon {
+  position: absolute;
+  top: 0;
+  right: 24px;
+  width: 32px;
+  height: 48px;
+  background: linear-gradient(135deg, #e53935, #b71c1c);
+  z-index: 14;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 82%, 0 100%);
+  animation: ribbonDrop 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  pointer-events: none;
+}
+
+.book-bookmark-ribbon .ribbon-icon {
+  font-size: 13px;
+  color: #fff;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+}
+
+@keyframes ribbonDrop {
+  from { transform: translateY(-48px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.tool-pill-btn.active-bookmark {
+  background: linear-gradient(135deg, #d32f2f, #b71c1c) !important;
+  border-color: #ffcdd2 !important;
+  color: #fff !important;
+  box-shadow: 0 0 12px rgba(229, 57, 53, 0.5) !important;
+}
+
+/* 3. Interactive Page Indicator Badge */
+.page-indicator-badge.interactive {
+  cursor: pointer;
+  border: 1px solid var(--color-card-border);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+  font-family: inherit;
+}
+
+.page-indicator-badge.interactive:hover {
+  background: var(--color-primary);
+  color: #fff;
+  box-shadow: 0 2px 8px var(--color-gold-glow);
+}
+
+.page-indicator-badge.interactive:active {
+  transform: scale(0.93);
+}
+
+/* 4. Tone Buttons in Settings */
+.tone-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 8px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tone-btn.active {
+  border-color: var(--color-gold);
+  background: var(--color-primary-soft);
+  box-shadow: var(--shadow-gold);
+}
+
+.tone-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  box-shadow: var(--shadow-sm);
+}
+
+.tone-circle.normal {
+  background: #ffffff;
+  border: 1.5px solid #d0d7d5;
+}
+
+.tone-circle.sepia {
+  background: #f7eedf;
+  border: 1.5px solid #d4af37;
+}
+
+.tone-circle.dark {
+  background: #141b19;
+  border: 1.5px solid #364d44;
+}
+
+/* 5. Jump Modal */
+.jump-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.jump-input-card {
+  background: var(--color-primary-soft);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.jump-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
+  text-align: center;
+}
+
+.jump-input-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.jump-number-input {
+  width: 78px;
+  height: 48px;
+  font-size: 22px;
+  font-weight: 800;
+  text-align: center;
+  color: var(--color-primary);
+  background: var(--color-surface);
+  border: 2px solid var(--color-gold);
+  border-radius: var(--radius-sm);
+  outline: none;
+  font-family: inherit;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+[data-theme="dark"] .jump-number-input {
+  color: var(--color-gold);
+  background: #1c2623;
+}
+
+.jump-number-input:focus {
+  box-shadow: 0 0 12px var(--color-gold-glow);
+}
+
+.jump-step-btn {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-weight: 700;
+  font-size: 13px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.15s ease;
+}
+
+.jump-step-btn:active {
+  transform: scale(0.92);
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.jump-action-btn {
+  background: linear-gradient(135deg, var(--color-gold), var(--color-gold-dark));
+  color: #08241c;
+  font-weight: 800;
+  font-size: 14px;
+  border: none;
+  border-radius: var(--radius-full);
+  padding: 12px 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: var(--shadow-gold);
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.jump-action-btn:active {
+  transform: scale(0.97);
+}
+
+.jump-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-muted);
+}
+
+.jump-shortcuts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.jump-chip-btn {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.jump-chip-btn:hover, .jump-chip-btn:active {
+  border-color: var(--color-gold);
+  background: var(--color-primary-soft);
+  transform: translateY(-1px);
+}
+
+.jump-chip-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.jump-chip-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+}
+
+[data-theme="dark"] .jump-chip-badge {
+  color: var(--color-gold);
+}
+
+/* 6. TOC Tabs Navigation & Content */
+.toc-tabs-nav {
+  display: flex;
+  gap: 6px;
+  padding: 0 16px 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.toc-tab-btn {
+  flex: 1;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.toc-tab-btn.active {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+[data-theme="dark"] .toc-tab-btn.active {
+  background: var(--color-gold);
+  color: #08241c;
+  border-color: var(--color-gold);
+}
+
+/* 7. Gallery Thumbnail Grid */
+.thumbnails-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding: 8px 0;
+}
+
+@media (min-width: 480px) {
+  .thumbnails-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.thumb-card {
+  position: relative;
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.thumb-card:hover, .thumb-card:active {
+  transform: translateY(-2px);
+  border-color: var(--color-gold);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.thumb-card.current-page {
+  border-color: var(--color-gold);
+  box-shadow: 0 0 12px var(--color-gold-glow);
+}
+
+.thumb-img-wrap {
+  width: 100%;
+  aspect-ratio: 0.7;
+  background: #eee;
+  overflow: hidden;
+  position: relative;
+}
+
+.thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+}
+
+.thumb-badge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+}
+
+.thumb-bookmark-icon {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 12px;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.8));
+}
+
+.thumb-meta {
+  padding: 6px 8px;
+  background: var(--color-surface);
+}
+
+.thumb-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 8. Bookmarks List */
+.bookmarks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.bookmark-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.bookmark-item:hover, .bookmark-item:active {
+  border-color: var(--color-gold);
+  transform: translateX(2px);
+}
+
+.bookmark-item-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bookmark-item-ribbon {
+  font-size: 20px;
+}
+
+.bookmark-item-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.bookmark-item-meta {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.bookmark-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bookmark-delete-btn {
+  background: none;
+  border: none;
+  color: #e53935;
+  font-size: 16px;
+  padding: 6px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bookmark-delete-btn:active {
+  background: rgba(229, 57, 53, 0.1);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--color-text-muted);
+}
+
+.empty-state-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+  opacity: 0.7;
+}
+
+.empty-state-text {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--color-text);
+}
+
+.empty-state-sub {
+  font-size: 12px;
+}
+

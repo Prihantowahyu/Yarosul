@@ -1,5 +1,5 @@
-// YA ROSUL - Progressive Web App Service Worker (v4)
-const CACHE_NAME = 'yarosul-pwa-v4';
+// YA ROSUL - Progressive Web App Service Worker (v5)
+const CACHE_NAME = 'yarosul-pwa-v5';
 
 const STATIC_CORE = [
   './',
