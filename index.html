@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0d3b2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Ya Rosul">
+  <meta name="description" content="Aplikasi Buku Dzikir & Ta'lim Ya Rosul - Ponpes Salafiyah Nurul Huda Pajaran Poncokusumo">
+
+  <title>Ya Rosul - Majlis Dzikir & Ta'lim</title>
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="assets/icons/favicon.png">
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Top Mobile Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <img src="assets/icons/icon-192.png" alt="Logo Ya Rosul" class="brand-icon">
+        <div class="brand-info">
+          <div class="brand-title">
+            YA ROSUL
+            <span class="gold-badge">Revisi</span>
+          </div>
+          <div class="brand-sub">Majlis Dzikir & Ta'lim</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" id="headerTocBtn" title="Daftar Isi" aria-label="Daftar Isi">
+          📑
+        </button>
+        <button class="icon-btn" id="headerSettingsBtn" title="Pengaturan" aria-label="Pengaturan">
+          ⚙️
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="app-main">
+      <!-- ============================================== -->
+      <!-- VIEW 1: BOOK READER (SCAN ASLI HD)             -->
+      <!-- ============================================== -->
+      <section id="bookView" class="view-container book-view active">
+        <!-- Canvas Page Area -->
+        <div class="book-canvas-area" id="bookCanvasArea">
+          <!-- Floating Tool Overlay -->
+          <div class="book-overlay-tools">
+            <button class="tool-pill-btn" id="zoomBtn">
+              🔍 1x
+            </button>
+          </div>
+
+          <!-- Page Wrapper for Zoom and Swiping -->
+          <div class="book-page-wrapper" id="bookPageWrapper">
+            <img src="assets/pages/page_1.webp" alt="Halaman Buku" id="bookPageImg" class="book-page-img">
+          </div>
+
+          <!-- Touch Tap Zones (Left/Right) -->
+          <div class="tap-zone left" id="tapZoneLeft" title="Halaman Sebelumnya">
+            <span class="tap-arrow">‹</span>
+          </div>
+          <div class="tap-zone right" id="tapZoneRight" title="Halaman Selanjutnya">
+            <span class="tap-arrow">›</span>
+          </div>
+        </div>
+
+        <!-- Book Bottom Controller -->
+        <div class="book-bottom-bar">
+          <!-- Chapter Tag and Page Number -->
+          <div class="book-info-row">
+            <div class="current-chapter-tag" id="currentChapterTag">
+              <span>📖</span> Cover Depan
+            </div>
+            <div class="page-indicator-badge" id="pageIndicator">
+              1 / 48
+            </div>
+          </div>
+
+          <!-- Slider Scrubber Navigation -->
+          <div class="book-slider-row">
+            <button class="scrubber-btn" id="prevPageBtn" title="Sebelumnya" aria-label="Sebelumnya">
+              ‹
+            </button>
+            <input type="range" min="1" max="48" value="1" id="bookRange" class="book-range" aria-label="Geser Halaman">
+            <button class="scrubber-btn" id="nextPageBtn" title="Selanjutnya" aria-label="Selanjutnya">
+              ›
+            </button>
+          </div>
+
+          <!-- Quick Chapter Chip Navigation -->
+          <div class="chapter-chips-scroll" id="chapterChips">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- VIEW 2: DIGITAL TEXT & INTERACTIVE TASBIH      -->
+      <!-- ============================================== -->
+      <section id="digitalView" class="view-container digital-view">
+        <!-- Top Category Tabs Bar -->
+        <div class="digital-tabs-bar" id="digitalTabs">
+          <button class="tab-pill active" data-tab="ratib">
+            <span>📿</span> Ratibul Haddad
+          </button>
+          <button class="tab-pill" data-tab="yasin">
+            <span>✨</span> Surat Yasin
+          </button>
+          <button class="tab-pill" data-tab="waqiah">
+            <span>🌟</span> Al-Waqi'ah
+          </button>
+          <button class="tab-pill" data-tab="fadhilah">
+            <span>💎</span> Fadhilah & Biografi
+          </button>
+          <button class="tab-pill" data-tab="pengantar">
+            <span>📜</span> Sambutan Pengasuh
+          </button>
+        </div>
+
+        <!-- Scrollable Text Area -->
+        <div class="digital-scroll-area" id="digitalContentArea">
+          <!-- Rendered dynamically by JS -->
+        </div>
+      </section>
+    </main>
+
+    <!-- Bottom App Navigation Bar -->
+    <nav class="bottom-nav">
+      <button class="nav-item active" id="navBook">
+        <span class="nav-icon">📖</span>
+        <span>Buku HD</span>
+      </button>
+
+      <button class="nav-item" id="navDigital">
+        <span class="nav-icon">📿</span>
+        <span>Teks Digital</span>
+      </button>
+
+      <!-- Central Floating Tasbih Button -->
+      <button class="tasbih-fab" id="fabTasbih" title="Tasbih Mandiri" aria-label="Tasbih Mandiri">
+        📿
+      </button>
+
+      <button class="nav-item" id="navToc">
+        <span class="nav-icon">📑</span>
+        <span>Daftar Isi</span>
+      </button>
+
+      <button class="nav-item" id="navSettings">
+        <span class="nav-icon">⚙️</span>
+        <span>Pengaturan</span>
+      </button>
+    </nav>
+
+    <!-- ============================================== -->
+    <!-- MODAL 1: DAFTAR ISI (TABLE OF CONTENTS)        -->
+    <!-- ============================================== -->
+    <div class="modal-backdrop" id="tocModal">
+      <div class="bottom-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <div class="sheet-title">
+            <span>📑</span> Daftar Isi Buku
+          </div>
+          <button class="icon-btn close-modal-btn" style="color:var(--color-text);">✕</button>
+        </div>
+        <div class="sheet-body" id="tocList">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL 2: PENGATURAN (SETTINGS)                 -->
+    <!-- ============================================== -->
+    <div class="modal-backdrop" id="settingsModal">
+      <div class="bottom-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <div class="sheet-title">
+            <span>⚙️</span> Pengaturan Tampilan
+          </div>
+          <button class="icon-btn close-modal-btn" style="color:var(--color-text);">✕</button>
+        </div>
+        <div class="sheet-body">
+          <!-- Theme Selection -->
+          <div class="setting-item">
+            <div class="setting-label">Tema Warna</div>
+            <div class="setting-desc">Pilih suasana tampilan membaca yang paling nyaman</div>
+            <div class="theme-options">
+              <button class="theme-btn active" data-theme="emerald">
+                <div class="theme-circle emerald"></div>
+                <span>Emerald Gold</span>
+              </button>
+              <button class="theme-btn" data-theme="dark">
+                <div class="theme-circle dark"></div>
+                <span>Dark Velvet</span>
+              </button>
+              <button class="theme-btn" data-theme="sepia">
+                <div class="theme-circle sepia"></div>
+                <span>Sepia Ivory</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Font Size Slider -->
+          <div class="setting-item">
+            <div class="setting-row">
+              <div>
+                <div class="setting-label">Ukuran Huruf Arab</div>
+                <div class="setting-desc">Sesuaikan kenyamanan mata saat membaca</div>
+              </div>
+            </div>
+            <input type="range" min="20" max="38" value="26" id="fontSizeSlider" class="book-range" style="margin-top:8px;">
+          </div>
+
+          <!-- Transliterasi Latin Toggle -->
+          <div class="setting-item">
+            <div class="setting-row">
+              <div>
+                <div class="setting-label">Teks Latin (Transliterasi)</div>
+                <div class="setting-desc">Tampilkan panduan bacaan latin</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="latinToggle" checked>
+                <span class="slider-switch"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Terjemahan Toggle -->
+          <div class="setting-item">
+            <div class="setting-row">
+              <div>
+                <div class="setting-label">Terjemahan Bahasa Indonesia</div>
+                <div class="setting-desc">Tampilkan makna ayat & dzikir</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="transToggle" checked>
+                <span class="slider-switch"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Audio & Vibrate Sound -->
+          <div class="setting-item">
+            <div class="setting-row">
+              <div>
+                <div class="setting-label">Suara Klik Tasbih</div>
+                <div class="setting-desc">Bunyi lembut saat menekan hitungan dzikir</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="soundToggle" checked>
+                <span class="slider-switch"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-row">
+              <div>
+                <div class="setting-label">Getaran (Vibrate HP)</div>
+                <div class="setting-desc">Getaran haptik lembut saat menekan hitungan</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="vibrateToggle" checked>
+                <span class="slider-switch"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Reset All Counters -->
+          <div class="setting-item" style="border-bottom:none; margin-top:8px;">
+            <button id="resetAllCountersBtn" class="counter-tap-btn" style="width:100%; justify-content:center; background:#c0392b; border-color:#e74c3c;">
+              ↺ Reset Semua Hitungan Dzikir
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL 3: FLOATING TASBIH MANDIRI               -->
+    <!-- ============================================== -->
+    <div class="modal-backdrop" id="tasbihModal">
+      <div class="bottom-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <div class="sheet-title">
+            <span>📿</span> Tasbih Digital Mandiri
+          </div>
+          <button class="icon-btn close-modal-btn" style="color:var(--color-text);">✕</button>
+        </div>
+        <div class="sheet-body tasbih-modal-card">
+          <!-- Target selector row -->
+          <div class="tasbih-targets-row">
+            <button class="target-pill active" data-target="33">33x</button>
+            <button class="target-pill" data-target="100">100x</button>
+            <button class="target-pill" data-target="1000">1000x</button>
+            <button class="target-pill" data-target="0">Bebas</button>
+          </div>
+
+          <!-- Interactive Tap Circle Ring -->
+          <div class="tasbih-ring-wrapper" id="tasbihTapTarget">
+            <svg class="tasbih-ring-svg" viewBox="0 0 200 200">
+              <circle class="tasbih-ring-bg" cx="100" cy="100" r="80"></circle>
+              <circle class="tasbih-ring-progress" id="tasbihProgressRing" cx="100" cy="100" r="80"></circle>
+            </svg>
+            <div class="tasbih-ring-center">
+              <span class="tasbih-big-number" id="tasbihBigNumber">0</span>
+              <span class="tasbih-ring-label" id="tasbihRingLabel">Target: 33</span>
+            </div>
+          </div>
+
+          <p style="font-size:12px; color:var(--color-text-muted); margin-bottom:16px;">
+            Sentuh lingkaran di atas untuk menambah hitungan
+          </p>
+
+          <!-- Reset Button -->
+          <div class="tasbih-tools-row">
+            <button class="tool-pill-btn" id="resetTasbihBtn" style="padding:10px 24px; font-size:14px; background:var(--color-primary-soft); color:var(--color-text); border:1px solid var(--color-border);">
+              ↺ Reset ke 0
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating Toast Notification -->
+    <div class="toast-msg" id="toastMsg"></div>
+  </div>
+
+  <!-- Content & App Scripts -->
+  <script src="data/content.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
