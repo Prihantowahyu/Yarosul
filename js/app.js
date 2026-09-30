@@ -251,6 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function setZoom(level) {
     state.zoomLevel = level;
+    bookPageWrapper.style.transformOrigin = 'center center';
     if (level === 1.0) {
       bookPageWrapper.style.transform = 'none';
       zoomBtn.innerHTML = '🔍 1x';
