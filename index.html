@@ -36,6 +36,9 @@
         <button class="icon-btn" id="headerInstallBtn" title="Pasang Aplikasi ke HP" aria-label="Pasang Aplikasi ke HP" style="display:none; color:var(--color-gold); font-size:14px; width:auto; border-radius:var(--radius-full); padding:0 12px; gap:4px;">
           <span>📲</span> Pasang
         </button>
+        <button class="icon-btn" id="headerFullscreenBtn" title="Mode Layar Penuh" aria-label="Mode Layar Penuh">
+          ⛶
+        </button>
         <button class="icon-btn" id="headerShareBtn" title="Bagikan Aplikasi" aria-label="Bagikan Aplikasi">
           📤
         </button>
@@ -58,8 +61,11 @@
         <div class="book-canvas-area" id="bookCanvasArea">
           <!-- Floating Tool Overlay -->
           <div class="book-overlay-tools">
-            <button class="tool-pill-btn" id="zoomBtn">
+            <button class="tool-pill-btn" id="zoomBtn" title="Perbesar Tampilan">
               🔍 1x
+            </button>
+            <button class="tool-pill-btn" id="bookFullscreenBtn" title="Mode Layar Penuh (Fokus Baca)">
+              ⛶ Penuh
             </button>
           </div>
 
@@ -313,6 +319,20 @@
             </div>
           </div>
 
+          <!-- Mode Layar Penuh Fullscreen -->
+          <div class="setting-item">
+            <div class="setting-row">
+              <div>
+                <div class="setting-label">⛶ Mode Layar Penuh</div>
+                <div class="setting-desc">Membaca fokus maksimal tanpa header & bilah navigasi</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="fullscreenToggle">
+                <span class="slider-switch"></span>
+              </label>
+            </div>
+          </div>
+
           <!-- Bagikan Aplikasi -->
           <div class="setting-item">
             <div class="setting-label">📤 Bagikan Aplikasi</div>
@@ -425,6 +445,11 @@
         </div>
       </div>
     </div>
+
+    <!-- Floating Exit Fullscreen Button -->
+    <button class="floating-exit-fullscreen-btn" id="floatingExitFullscreenBtn" title="Keluar Layar Penuh" aria-label="Keluar Layar Penuh">
+      <span>🗗</span> Keluar Layar Penuh
+    </button>
 
     <!-- Floating Toast Notification -->
     <div class="toast-msg" id="toastMsg"></div>

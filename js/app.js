@@ -347,6 +347,23 @@ document.addEventListener('DOMContentLoaded', () => {
   nextPageBtn.addEventListener('click', () => nextPage());
   zoomBtn.addEventListener('click', () => toggleZoom());
 
+  // Center tap on book canvas in fullscreen toggles Zen mode (hides bottom scrubber)
+  canvasArea.addEventListener('click', (e) => {
+    if (e.target.closest('.tap-zone') || e.target.closest('.book-overlay-tools') || state.zoomLevel > 1.0) {
+      return;
+    }
+    const rect = canvasArea.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    if (clickX >= rect.width * 0.25 && clickX <= rect.width * 0.75) {
+      if (document.body.classList.contains('fullscreen-mode')) {
+        document.body.classList.toggle('hide-book-controls');
+        const isHidden = document.body.classList.contains('hide-book-controls');
+        showToast(isHidden ? 'Mode Zen: Kontrol disembunyikan' : 'Kontrol ditampilkan');
+        triggerHaptic('tap');
+      }
+    }
+  });
+
   bookRange.addEventListener('input', (e) => {
     loadBookPage(parseInt(e.target.value));
   });
@@ -594,6 +611,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function switchMode(mode) {
     state.activeMode = mode;
     localStorage.setItem('yarosul_mode', mode);
+    document.body.classList.toggle('book-active', mode === 'book');
 
     if (mode === 'book') {
       bookView.classList.add('active');
@@ -954,6 +972,133 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('visibilitychange', async () => {
     if (document.visibilityState === 'visible' && wakeLockToggle && wakeLockToggle.checked && !wakeLock) {
       await requestWakeLock();
+    }
+  });
+
+  // ==========================================
+  // Mode Layar Penuh (Fullscreen & Immersive Reading)
+  // ==========================================
+  const headerFullscreenBtn = document.getElementById('headerFullscreenBtn');
+  const bookFullscreenBtn = document.getElementById('bookFullscreenBtn');
+  const floatingExitFullscreenBtn = document.getElementById('floatingExitFullscreenBtn');
+  const fullscreenToggle = document.getElementById('fullscreenToggle');
+
+  function isNativeFullscreen() {
+    return !!(
+      document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.mozFullScreenElement ||
+      document.msFullscreenElement
+    );
+  }
+
+  function updateFullscreenUI(active) {
+    state.isFullscreen = active;
+    document.body.classList.toggle('fullscreen-mode', active);
+
+    if (!active) {
+      document.body.classList.remove('hide-book-controls');
+    }
+
+    if (headerFullscreenBtn) {
+      headerFullscreenBtn.innerHTML = active ? '🗗' : '⛶';
+      headerFullscreenBtn.title = active ? 'Keluar Layar Penuh' : 'Mode Layar Penuh';
+      headerFullscreenBtn.setAttribute('aria-label', active ? 'Keluar Layar Penuh' : 'Mode Layar Penuh');
+    }
+
+    if (bookFullscreenBtn) {
+      bookFullscreenBtn.innerHTML = active ? '🗗 Keluar' : '⛶ Penuh';
+      bookFullscreenBtn.title = active ? 'Keluar Layar Penuh' : 'Mode Layar Penuh (Fokus Baca)';
+      bookFullscreenBtn.classList.toggle('active-fullscreen', active);
+    }
+
+    if (fullscreenToggle && fullscreenToggle.checked !== active) {
+      fullscreenToggle.checked = active;
+    }
+  }
+
+  async function enterFullscreen() {
+    updateFullscreenUI(true);
+    const docEl = document.documentElement;
+    try {
+      if (docEl.requestFullscreen) {
+        await docEl.requestFullscreen();
+      } else if (docEl.webkitRequestFullscreen) {
+        await docEl.webkitRequestFullscreen();
+      } else if (docEl.mozRequestFullScreen) {
+        await docEl.mozRequestFullScreen();
+      } else if (docEl.msRequestFullscreen) {
+        await docEl.msRequestFullscreen();
+      }
+    } catch (e) {
+      // Browsers with strict gestures or iOS fallback gracefully
+    }
+    showToast('⛶ Mode Layar Penuh aktif');
+    triggerHaptic('tap');
+  }
+
+  async function exitFullscreen() {
+    updateFullscreenUI(false);
+    try {
+      if (isNativeFullscreen()) {
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          await document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+          await document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+          await document.msExitFullscreen();
+        }
+      }
+    } catch (e) {}
+    showToast('Keluar dari Layar Penuh');
+    triggerHaptic('tap');
+  }
+
+  function toggleFullscreen() {
+    if (state.isFullscreen || isNativeFullscreen()) {
+      exitFullscreen();
+    } else {
+      enterFullscreen();
+    }
+  }
+
+  if (headerFullscreenBtn) {
+    headerFullscreenBtn.addEventListener('click', toggleFullscreen);
+  }
+  if (bookFullscreenBtn) {
+    bookFullscreenBtn.addEventListener('click', toggleFullscreen);
+  }
+  if (floatingExitFullscreenBtn) {
+    floatingExitFullscreenBtn.addEventListener('click', exitFullscreen);
+  }
+  if (fullscreenToggle) {
+    fullscreenToggle.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        enterFullscreen();
+      } else {
+        exitFullscreen();
+      }
+    });
+  }
+
+  // Handle native ESC or hardware gesture exits
+  ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(evt => {
+    document.addEventListener(evt, () => {
+      const nativeActive = isNativeFullscreen();
+      if (!nativeActive && state.isFullscreen) {
+        updateFullscreenUI(false);
+      } else if (nativeActive && !state.isFullscreen) {
+        updateFullscreenUI(true);
+      }
+    });
+  });
+
+  // Keyboard shortcut: 'f' or 'F' toggles fullscreen
+  document.addEventListener('keydown', (e) => {
+    if ((e.key === 'f' || e.key === 'F') && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+      toggleFullscreen();
     }
   });
 
