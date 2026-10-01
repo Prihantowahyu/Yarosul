@@ -287,31 +287,121 @@ html, body {
   top: 12px;
   right: 12px;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  z-index: 15;
-}
-
-.tool-pill-btn {
-  background: rgba(13, 36, 28, 0.85);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid var(--color-card-border);
-  color: #fff;
-  border-radius: var(--radius-full);
-  padding: 6px 12px;
-  font-size: 12px;
-  font-weight: 600;
+/* ==========================================================================
+   ENHANCED READER CONTROLS (COLLAPSIBLE, ZERO OBSTRUCTION)
+   ========================================================================== */
+.book-overlay-tools {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 30;
   display: flex;
   align-items: center;
   gap: 6px;
-  box-shadow: var(--shadow-md);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Collapsed Toggle Button */
+.tool-toggle-btn {
+  background: rgba(13, 36, 28, 0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  color: #fff;
+  border-radius: var(--radius-full);
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
   cursor: pointer;
+  transition: all 0.25s ease;
+  opacity: 0.85;
+}
+
+.tool-toggle-btn:hover, .tool-toggle-btn:active {
+  opacity: 1;
+  background: rgba(13, 59, 46, 0.95);
+  border-color: var(--color-gold);
+  transform: scale(1.04);
+}
+
+.book-overlay-tools.collapsed .tool-pills-group {
+  display: none;
+}
+
+.book-overlay-tools:not(.collapsed) .tool-toggle-btn {
+  display: none;
+}
+
+.tool-pills-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  background: rgba(13, 36, 28, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--color-gold);
+  border-radius: var(--radius-full);
+  padding: 4px 6px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  animation: toolFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes toolFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.tool-pill-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  color: #fff;
+  border-radius: var(--radius-full);
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.tool-pill-btn:hover {
+  background: rgba(212, 175, 55, 0.25);
+  border-color: var(--color-gold);
 }
 
 .tool-pill-btn:active {
-  transform: scale(0.95);
+  transform: scale(0.94);
   background: var(--color-primary-light);
+}
+
+.tool-pill-btn.active-bookmark {
+  background: linear-gradient(135deg, var(--color-gold), var(--color-gold-dark));
+  color: #08241c;
+  font-weight: 700;
+  border-color: #fff;
+}
+
+.tool-pill-btn.tool-close-pill {
+  padding: 5px 8px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  font-size: 12px;
 }
 
 /* Touch navigation tap zones for mobile */
@@ -319,7 +409,7 @@ html, body {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 25%;
+  width: 22%;
   z-index: 12;
   cursor: pointer;
   display: flex;
@@ -329,8 +419,8 @@ html, body {
 }
 
 .tap-zone:hover, .tap-zone:active {
-  opacity: 0.15;
-  background: rgba(255, 255, 255, 0.2);
+  opacity: 0.18;
+  background: rgba(255, 255, 255, 0.25);
 }
 
 .tap-zone.left {
@@ -351,6 +441,28 @@ html, body {
   text-shadow: 0 2px 8px rgba(0,0,0,0.8);
 }
 
+/* Zoom & Pan Handling */
+.book-page-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  transition: transform 0.1s ease-out;
+  touch-action: pan-x pan-y pinch-zoom;
+}
+
+.book-page-wrapper.is-zoomed {
+  cursor: grab;
+  touch-action: none;
+}
+
+.book-page-wrapper.is-panning {
+  cursor: grabbing;
+}
+
 /* Book bottom controller */
 .book-bottom-bar {
   background: var(--color-surface);
@@ -360,12 +472,82 @@ html, body {
   flex-direction: column;
   gap: 8px;
   box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
 }
 
 .book-info-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
+}
+
+.book-info-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.quick-action-pill {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  border: 1px solid var(--color-border);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .quick-action-pill {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-gold);
+  border-color: rgba(212, 175, 55, 0.2);
+}
+
+.quick-action-pill:active {
+  transform: scale(0.92);
+  background: var(--color-primary-light);
+  color: #fff;
+}
+
+.quick-action-pill.active {
+  background: var(--color-gold);
+  color: #08241c;
+  border-color: var(--color-gold-dark);
+}
+
+/* Zen / Immersive Mode (Clean reading, zero controls) */
+body.zen-reading-mode .app-header {
+  transform: translateY(-100%);
+  pointer-events: none;
+}
+
+body.zen-reading-mode .book-bottom-bar {
+  transform: translateY(100%);
+  pointer-events: none;
+}
+
+body.zen-reading-mode .bottom-nav {
+  transform: translateY(100%);
+  pointer-events: none;
+}
+
+body.zen-reading-mode .book-overlay-tools {
+  opacity: 0.15;
+}
+
+body.zen-reading-mode .book-overlay-tools:hover,
+body.zen-reading-mode .book-overlay-tools:active {
+  opacity: 1;
+}
+
+.app-header, .bottom-nav {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .current-chapter-tag {
@@ -823,6 +1005,149 @@ html, body {
 .counter-reset-btn:active {
   background: rgba(0, 0, 0, 0.05);
   color: #e74c3c;
+}
+
+/* ==========================================================================
+   AUDIO PLAYER & VERSE AUDIO CONTROLS (SURAT YASIN & AL-WAQI'AH)
+   ========================================================================== */
+.audio-player-card {
+  background: linear-gradient(135deg, rgba(13, 59, 46, 0.95), rgba(8, 36, 28, 0.98));
+  border: 1px solid var(--color-gold);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.audio-player-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100%;
+  background: radial-gradient(circle at top right, rgba(212, 175, 55, 0.25), transparent 70%);
+  pointer-events: none;
+}
+
+.audio-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.audio-reciter-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--color-gold-light);
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+}
+
+.audio-controls-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.audio-main-play-btn {
+  background: linear-gradient(135deg, var(--color-gold), var(--color-gold-dark));
+  color: #08241c;
+  border: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 15px var(--color-gold-glow);
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
+}
+
+.audio-main-play-btn:active {
+  transform: scale(0.92);
+}
+
+.audio-main-play-btn.playing {
+  animation: pulseGold 1.5s infinite;
+}
+
+@keyframes pulseGold {
+  0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(212, 175, 55, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+}
+
+.audio-info-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.audio-track-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.audio-track-status {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.verse-audio-btn {
+  background: var(--color-primary-soft);
+  border: 1px solid var(--color-border);
+  color: var(--color-primary);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .verse-audio-btn {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-gold);
+  border-color: rgba(212, 175, 55, 0.2);
+}
+
+.verse-audio-btn:hover, .verse-audio-btn:active {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-gold);
+}
+
+.verse-audio-btn.playing {
+  background: var(--color-gold);
+  color: #08241c;
+  font-weight: 700;
+  border-color: #fff;
+}
+
+.item-card.is-playing {
+  border-color: var(--color-gold);
+  box-shadow: 0 0 20px var(--color-gold-glow);
+  background: rgba(212, 175, 55, 0.06);
 }
 
 /* ==========================================================================

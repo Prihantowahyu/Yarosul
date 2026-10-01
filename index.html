@@ -59,20 +59,29 @@
       <section id="bookView" class="view-container book-view active">
         <!-- Canvas Page Area -->
         <div class="book-canvas-area" id="bookCanvasArea">
-          <!-- Floating Tool Overlay -->
-          <div class="book-overlay-tools">
-            <button class="tool-pill-btn" id="zoomBtn" title="Perbesar Tampilan">
-              🔍 1x
+          <!-- Collapsible Floating Reader Tools (Unobtrusive & Clean) -->
+          <div class="book-overlay-tools collapsed" id="bookOverlayTools">
+            <button class="tool-toggle-btn" id="toolToggleBtn" title="Alat Baca (Zoom, Nuansa Kertas, Bookmark)">
+              <span class="tool-toggle-icon">🛠️</span>
+              <span class="tool-toggle-text">Alat</span>
             </button>
-            <button class="tool-pill-btn" id="paperToneBtn" title="Ganti Nuansa Kertas (Asli / Sepia Hangat / Mode Malam)">
-              ☀️ Asli
-            </button>
-            <button class="tool-pill-btn" id="bookmarkBtn" title="Tandai Halaman Ini (Bookmark)">
-              🔖 Tandai
-            </button>
-            <button class="tool-pill-btn" id="bookFullscreenBtn" title="Mode Layar Penuh (Fokus Baca)">
-              ⛶ Penuh
-            </button>
+            <div class="tool-pills-group" id="toolPillsGroup">
+              <button class="tool-pill-btn" id="zoomBtn" title="Perbesar Tampilan">
+                🔍 1x
+              </button>
+              <button class="tool-pill-btn" id="paperToneBtn" title="Ganti Nuansa Kertas (Asli / Sepia / Malam)">
+                ☀️ Asli
+              </button>
+              <button class="tool-pill-btn" id="bookmarkBtn" title="Tandai Halaman Ini (Bookmark)">
+                🔖 Tandai
+              </button>
+              <button class="tool-pill-btn" id="bookFullscreenBtn" title="Mode Layar Penuh">
+                ⛶ Penuh
+              </button>
+              <button class="tool-pill-btn tool-close-pill" id="toolCloseBtn" title="Tutup Menu Alat">
+                ✕
+              </button>
+            </div>
           </div>
 
           <!-- Page Wrapper for Zoom and Swiping -->
@@ -100,9 +109,17 @@
             <div class="current-chapter-tag" id="currentChapterTag">
               <span>📖</span> Cover Depan
             </div>
-            <button class="page-indicator-badge interactive" id="pageIndicator" title="Ketuk untuk lompat langsung ke halaman" aria-label="Lompat ke halaman">
-              1 / 48 ▾
-            </button>
+            <div class="book-info-actions">
+              <button class="quick-action-pill" id="quickToneBtn" title="Ganti Nuansa Kertas (Asli/Sepia/Malam)">
+                <span>☀️</span>
+              </button>
+              <button class="quick-action-pill" id="quickBookmarkBtn" title="Tandai Halaman Ini">
+                <span>🔖</span>
+              </button>
+              <button class="page-indicator-badge interactive" id="pageIndicator" title="Ketuk untuk lompat langsung ke halaman" aria-label="Lompat ke halaman">
+                1 / 48 ▾
+              </button>
+            </div>
           </div>
 
           <!-- Slider Scrubber Navigation -->
@@ -131,6 +148,9 @@
         <div class="digital-tabs-bar" id="digitalTabs">
           <button class="tab-pill active" data-tab="ratib">
             <span>📿</span> Ratibul Haddad
+          </button>
+          <button class="tab-pill" data-tab="doa_ratib">
+            <span>🤲</span> Doa Ratib
           </button>
           <button class="tab-pill" data-tab="yasin">
             <span>✨</span> Surat Yasin

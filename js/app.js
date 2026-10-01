@@ -114,6 +114,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const chapterChips = document.getElementById('chapterChips');
 
   // Reading Comfort & Navigation elements
+  const bookOverlayTools = document.getElementById('bookOverlayTools');
+  const toolToggleBtn = document.getElementById('toolToggleBtn');
+  const toolCloseBtn = document.getElementById('toolCloseBtn');
+  const quickToneBtn = document.getElementById('quickToneBtn');
+  const quickBookmarkBtn = document.getElementById('quickBookmarkBtn');
   const paperToneBtn = document.getElementById('paperToneBtn');
   const bookmarkBtn = document.getElementById('bookmarkBtn');
   const bookmarkRibbon = document.getElementById('bookmarkRibbon');
@@ -167,6 +172,11 @@ document.addEventListener('DOMContentLoaded', () => {
         paperToneBtn.title = 'Nuansa Kertas: Mode Malam Invert (Ketuk untuk ganti)';
       }
     }
+    if (quickToneBtn) {
+      if (tone === 'normal') quickToneBtn.innerHTML = '<span>☀️</span>';
+      else if (tone === 'sepia') quickToneBtn.innerHTML = '<span>📜</span>';
+      else if (tone === 'dark') quickToneBtn.innerHTML = '<span>🌙</span>';
+    }
     document.querySelectorAll('.tone-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.tone === tone);
     });
@@ -198,6 +208,10 @@ document.addEventListener('DOMContentLoaded', () => {
       bookmarkBtn.classList.toggle('active-bookmark', bookmarked);
       bookmarkBtn.innerHTML = bookmarked ? '🔖 Tersimpan' : '🔖 Tandai';
       bookmarkBtn.title = bookmarked ? 'Halaman ini ditandai (Ketuk untuk hapus)' : 'Tandai Halaman Ini (Bookmark)';
+    }
+    if (quickBookmarkBtn) {
+      quickBookmarkBtn.classList.toggle('active', bookmarked);
+      quickBookmarkBtn.title = bookmarked ? 'Halaman ini ditandai (Ketuk untuk lepas)' : 'Tandai Halaman Ini';
     }
     if (bookmarkCountBadge) {
       bookmarkCountBadge.textContent = state.bookmarks.length;
@@ -300,12 +314,23 @@ document.addEventListener('DOMContentLoaded', () => {
       jumpPageInput.value = pageNum;
     }
 
-    // Update image with soft fade
-    bookPageImg.style.opacity = '0.4';
+    // Update image with soft fade & safe load check
+    bookPageImg.style.opacity = '0.35';
     bookPageImg.src = `assets/pages/page_${pageNum}.webp`;
     bookPageImg.onload = () => {
       bookPageImg.style.opacity = '1';
     };
+    bookPageImg.onerror = () => {
+      bookPageImg.style.opacity = '1';
+    };
+    if (bookPageImg.complete && bookPageImg.naturalWidth > 0) {
+      bookPageImg.style.opacity = '1';
+    }
+
+    // Auto-collapse tool overlay when turning page so content is clear
+    if (bookOverlayTools) {
+      bookOverlayTools.classList.add('collapsed');
+    }
 
     // Update chapter chips
     document.querySelectorAll('.chapter-chip').forEach(chip => {
@@ -318,7 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Reset zoom when navigating
+    // Reset zoom when navigating to new page
     setZoom(1.0);
 
     // Preload next and previous pages
@@ -349,25 +374,70 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function setZoom(level) {
-    state.zoomLevel = level;
-    bookPageWrapper.style.transformOrigin = 'center center';
-    if (level === 1.0) {
+  // ==========================================
+  // Fluid Pan, Zoom & Pinch Gestures
+  // ==========================================
+  let panX = 0;
+  let panY = 0;
+  let isPanning = false;
+  let panStartX = 0;
+  let panStartY = 0;
+  let initialPinchDist = 0;
+  let initialPinchZoom = 1.0;
+
+  function clampPan() {
+    if (state.zoomLevel <= 1.0) {
+      panX = 0;
+      panY = 0;
+      return;
+    }
+    const rect = canvasArea.getBoundingClientRect();
+    const maxPanX = (rect.width * (state.zoomLevel - 1)) / 1.7;
+    const maxPanY = (rect.height * (state.zoomLevel - 1)) / 1.7;
+    panX = Math.max(-maxPanX, Math.min(maxPanX, panX));
+    panY = Math.max(-maxPanY, Math.min(maxPanY, panY));
+  }
+
+  function updateTransform(withTransition = false) {
+    if (withTransition) {
+      bookPageWrapper.style.transition = 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)';
+    } else {
+      bookPageWrapper.style.transition = 'none';
+    }
+    if (state.zoomLevel <= 1.0) {
+      panX = 0;
+      panY = 0;
       bookPageWrapper.style.transform = 'none';
+      bookPageWrapper.classList.remove('is-zoomed', 'is-panning');
       zoomBtn.innerHTML = '🔍 1x';
     } else {
-      bookPageWrapper.style.transform = `scale(${level})`;
-      zoomBtn.innerHTML = `🔍 ${level}x`;
+      bookPageWrapper.style.transform = `translate3d(${panX}px, ${panY}px, 0) scale(${state.zoomLevel})`;
+      bookPageWrapper.classList.add('is-zoomed');
+      zoomBtn.innerHTML = `🔍 ${state.zoomLevel.toFixed(1)}x`;
     }
   }
 
+  function setZoom(level) {
+    level = Math.max(1.0, Math.min(3.5, level));
+    state.zoomLevel = level;
+    if (level === 1.0) {
+      panX = 0;
+      panY = 0;
+    }
+    clampPan();
+    updateTransform(true);
+  }
+
   function toggleZoom() {
-    if (state.zoomLevel === 1.0) {
-      setZoom(1.5);
-    } else if (state.zoomLevel === 1.5) {
-      setZoom(2.0);
+    if (state.zoomLevel < 1.4) {
+      setZoom(1.75);
+      showToast('Perbesar 1.8x (Bisa digeser)');
+    } else if (state.zoomLevel < 2.3) {
+      setZoom(2.5);
+      showToast('Perbesar 2.5x (Bisa digeser)');
     } else {
       setZoom(1.0);
+      showToast('Zoom normal 1x');
     }
     triggerHaptic('tap');
   }
@@ -388,56 +458,157 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Mobile Touch Gestures for Book Page
+  // Mobile Touch Gestures (Swipe, Pinch & Pan)
   let touchStartX = 0;
   let touchStartY = 0;
   let touchEndX = 0;
   let touchEndY = 0;
+  let lastTapTime = 0;
+
+  function getPinchDistance(t1, t2) {
+    return Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+  }
 
   const canvasArea = document.getElementById('bookCanvasArea');
+
   canvasArea.addEventListener('touchstart', (e) => {
-    if (e.touches.length === 1) {
+    if (e.touches.length === 2) {
+      // Two fingers: Pinch to zoom
+      initialPinchDist = getPinchDistance(e.touches[0], e.touches[1]);
+      initialPinchZoom = state.zoomLevel;
+      isPanning = false;
+    } else if (e.touches.length === 1) {
       touchStartX = e.touches[0].clientX;
       touchStartY = e.touches[0].clientY;
       touchEndX = touchStartX;
       touchEndY = touchStartY;
-    }
-  }, { passive: true });
 
-  canvasArea.addEventListener('touchmove', (e) => {
-    if (e.touches.length === 1) {
-      touchEndX = e.touches[0].clientX;
-      touchEndY = e.touches[0].clientY;
-    }
-  }, { passive: true });
-
-  canvasArea.addEventListener('touchend', (e) => {
-    if (state.zoomLevel > 1.0) return; // Don't swipe while zoomed in
-    const deltaX = touchEndX - touchStartX;
-    const deltaY = touchEndY - touchStartY;
-
-    // Check if horizontal swipe exceeds 45px and is primarily horizontal
-    if (Math.abs(deltaX) > 45 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
-      if (deltaX < 0) {
-        // Swiped left -> next page
-        nextPage();
-      } else {
-        // Swiped right -> prev page
-        prevPage();
+      if (state.zoomLevel > 1.0) {
+        // One finger when zoomed: Drag to pan
+        isPanning = true;
+        panStartX = touchStartX - panX;
+        panStartY = touchStartY - panY;
+        bookPageWrapper.classList.add('is-panning');
       }
     }
   }, { passive: true });
 
-  // Double tap to zoom
-  let lastTap = 0;
+  canvasArea.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 2 && initialPinchDist > 0) {
+      // Pinching
+      const currentDist = getPinchDistance(e.touches[0], e.touches[1]);
+      const scale = (currentDist / initialPinchDist) * initialPinchZoom;
+      state.zoomLevel = Math.max(1.0, Math.min(3.5, scale));
+      clampPan();
+      updateTransform(false);
+      if (e.cancelable) e.preventDefault();
+    } else if (e.touches.length === 1) {
+      touchEndX = e.touches[0].clientX;
+      touchEndY = e.touches[0].clientY;
+
+      if (isPanning && state.zoomLevel > 1.0) {
+        panX = touchEndX - panStartX;
+        panY = touchEndY - panStartY;
+        clampPan();
+        updateTransform(false);
+        if (e.cancelable) e.preventDefault();
+      }
+    }
+  }, { passive: false });
+
   canvasArea.addEventListener('touchend', (e) => {
-    const currentTime = new Date().getTime();
-    const tapLength = currentTime - lastTap;
-    if (tapLength < 300 && tapLength > 0) {
+    if (initialPinchDist > 0 && e.touches.length < 2) {
+      initialPinchDist = 0;
+      if (state.zoomLevel < 1.1) {
+        setZoom(1.0);
+      } else {
+        setZoom(state.zoomLevel);
+      }
+      return;
+    }
+
+    if (isPanning) {
+      isPanning = false;
+      bookPageWrapper.classList.remove('is-panning');
+      updateTransform(true);
+      return;
+    }
+
+    // Double tap handling
+    const now = Date.now();
+    const tapLength = now - lastTapTime;
+    if (tapLength > 0 && tapLength < 280) {
       toggleZoom();
+      lastTapTime = 0;
+      return;
+    }
+    lastTapTime = now;
+
+    // Normal single-finger swipe when not zoomed
+    if (state.zoomLevel <= 1.0) {
+      const deltaX = touchEndX - touchStartX;
+      const deltaY = touchEndY - touchStartY;
+      if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY) * 1.4) {
+        if (deltaX < 0) {
+          nextPage();
+        } else {
+          prevPage();
+        }
+      }
+    }
+  }, { passive: true });
+
+  // Center Tap on Book Canvas toggles Zen Mode (Clean screen)
+  canvasArea.addEventListener('click', (e) => {
+    if (
+      e.target.closest('.tool-pill-btn') ||
+      e.target.closest('.tool-toggle-btn') ||
+      e.target.closest('.tap-zone') ||
+      e.target.closest('.quick-action-pill') ||
+      state.zoomLevel > 1.0
+    ) {
+      return;
+    }
+    const rect = canvasArea.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    if (clickX >= rect.width * 0.22 && clickX <= rect.width * 0.78) {
+      document.body.classList.toggle('zen-reading-mode');
+      const isZen = document.body.classList.contains('zen-reading-mode');
+      showToast(isZen ? 'Mode Bersih (Ketuk layar untuk kembalikan menu)' : 'Menu baca ditampilkan', 1800);
+      triggerHaptic('tap');
+    }
+  });
+
+  // Desktop Mouse Drag to Pan when Zoomed
+  let isMouseDown = false;
+  let mouseStartX = 0;
+  let mouseStartY = 0;
+
+  canvasArea.addEventListener('mousedown', (e) => {
+    if (state.zoomLevel > 1.0 && e.button === 0) {
+      isMouseDown = true;
+      mouseStartX = e.clientX - panX;
+      mouseStartY = e.clientY - panY;
+      bookPageWrapper.classList.add('is-panning');
       e.preventDefault();
     }
-    lastTap = currentTime;
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (isMouseDown && state.zoomLevel > 1.0) {
+      panX = e.clientX - mouseStartX;
+      panY = e.clientY - mouseStartY;
+      clampPan();
+      updateTransform(false);
+    }
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (isMouseDown) {
+      isMouseDown = false;
+      bookPageWrapper.classList.remove('is-panning');
+      updateTransform(true);
+    }
   });
 
   // Tap zones left/right
@@ -447,6 +618,32 @@ document.addEventListener('DOMContentLoaded', () => {
   nextPageBtn.addEventListener('click', () => nextPage());
   zoomBtn.addEventListener('click', () => toggleZoom());
 
+  // Collapsible Floating Reader Tools
+  if (toolToggleBtn) {
+    toolToggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      bookOverlayTools.classList.toggle('collapsed');
+      triggerHaptic('tap');
+    });
+  }
+
+  if (toolCloseBtn) {
+    toolCloseBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      bookOverlayTools.classList.add('collapsed');
+      triggerHaptic('tap');
+    });
+  }
+
+  // Quick Action Buttons in Bottom Bar
+  if (quickToneBtn) {
+    quickToneBtn.addEventListener('click', () => cyclePaperTone());
+  }
+
+  if (quickBookmarkBtn) {
+    quickBookmarkBtn.addEventListener('click', () => toggleBookmark());
+  }
+
   // Reading Comfort tools
   if (paperToneBtn) {
     paperToneBtn.addEventListener('click', () => cyclePaperTone());
@@ -454,6 +651,19 @@ document.addEventListener('DOMContentLoaded', () => {
   if (bookmarkBtn) {
     bookmarkBtn.addEventListener('click', () => toggleBookmark());
   }
+
+  // Keyboard navigation for desktop users
+  document.addEventListener('keydown', (e) => {
+    if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+    if (e.key === 'ArrowLeft') {
+      prevPage();
+    } else if (e.key === 'ArrowRight') {
+      nextPage();
+    } else if (e.key === 'Escape') {
+      closeModals();
+      document.body.classList.remove('zen-reading-mode');
+    }
+  });
 
   // Interactive page indicator badge opens jump to page dialog
   if (pageIndicator) {
@@ -594,11 +804,140 @@ document.addEventListener('DOMContentLoaded', () => {
     digitalContentArea.scrollTop = 0;
   }
 
+  // ==========================================
+  // Audio Controller (Online Murottal & Ayat Streaming)
+  // ==========================================
+  let currentAudio = null;
+  let currentPlayingVerse = null;
+  let isFullSurahPlaying = false;
+
+  function stopAllAudio() {
+    if (currentAudio) {
+      try {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+      } catch (e) {}
+      currentAudio = null;
+    }
+    isFullSurahPlaying = false;
+    currentPlayingVerse = null;
+
+    const mainPlayBtn = document.getElementById('surahMainPlayBtn');
+    if (mainPlayBtn) {
+      mainPlayBtn.classList.remove('playing');
+      mainPlayBtn.innerHTML = '▶';
+    }
+    document.querySelectorAll('.verse-audio-btn').forEach(btn => {
+      btn.classList.remove('playing');
+      btn.innerHTML = '▶ 🔊';
+    });
+    document.querySelectorAll('.item-card').forEach(card => {
+      card.classList.remove('is-playing');
+    });
+    const statusEl = document.getElementById('surahAudioStatus');
+    if (statusEl) statusEl.textContent = 'Murottal: Ketuk ▶ untuk dengarkan lengkap';
+  }
+
+  function playVerseAudio(verseNum, audioUrl, cardEl, btnEl) {
+    if (currentPlayingVerse === verseNum && currentAudio && !currentAudio.paused) {
+      stopAllAudio();
+      return;
+    }
+    stopAllAudio();
+
+    btnEl.innerHTML = '⏳';
+    const audio = new Audio(audioUrl);
+    currentAudio = audio;
+    currentPlayingVerse = verseNum;
+
+    audio.play().then(() => {
+      btnEl.classList.add('playing');
+      btnEl.innerHTML = '⏸ 🔊';
+      cardEl.classList.add('is-playing');
+    }).catch(err => {
+      showToast('Gagal memutar audio ayat (periksa internet)');
+      stopAllAudio();
+    });
+
+    audio.onended = () => {
+      stopAllAudio();
+    };
+
+    audio.onerror = () => {
+      showToast('Audio ayat belum tersedia offline');
+      stopAllAudio();
+    };
+  }
+
+  function toggleFullSurahAudio(surahData, titleLatin) {
+    const mainPlayBtn = document.getElementById('surahMainPlayBtn');
+    const statusEl = document.getElementById('surahAudioStatus');
+
+    if (isFullSurahPlaying && currentAudio && !currentAudio.paused) {
+      stopAllAudio();
+      return;
+    }
+
+    const audioUrl = (surahData.audioFull && (surahData.audioFull['05'] || surahData.audioFull['01'])) || '';
+    if (!audioUrl) {
+      showToast('Audio surat lengkap belum tersedia');
+      return;
+    }
+
+    stopAllAudio();
+    if (statusEl) statusEl.textContent = 'Memuat audio murottal...';
+    if (mainPlayBtn) mainPlayBtn.innerHTML = '⏳';
+
+    const audio = new Audio(audioUrl);
+    currentAudio = audio;
+    isFullSurahPlaying = true;
+
+    audio.play().then(() => {
+      if (mainPlayBtn) {
+        mainPlayBtn.classList.add('playing');
+        mainPlayBtn.innerHTML = '⏸';
+      }
+      if (statusEl) statusEl.textContent = 'Sedang memutar: ' + titleLatin;
+      showToast(`▶ Memutar murottal ${titleLatin}`);
+    }).catch(err => {
+      showToast('Gagal memutar murottal (periksa koneksi)');
+      stopAllAudio();
+    });
+
+    audio.onended = () => {
+      showToast(`Murottal ${titleLatin} selesai`);
+      stopAllAudio();
+    };
+
+    audio.onerror = () => {
+      showToast('Murottal memerlukan koneksi internet');
+      stopAllAudio();
+    };
+  }
+
+  // ==========================================
+  // Mode 2: Digital Text & Interactive Tasbih
+  // ==========================================
+  function switchDigitalTab(tabId) {
+    stopAllAudio();
+    state.digitalTab = tabId;
+    localStorage.setItem('yarosul_digital_tab', tabId);
+
+    document.querySelectorAll('.tab-pill').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.tab === tabId);
+    });
+
+    renderDigitalContent(tabId);
+    digitalContentArea.scrollTop = 0;
+  }
+
   function renderDigitalContent(tabId) {
     digitalContentArea.innerHTML = '';
 
     if (tabId === 'ratib') {
       renderRatibSection();
+    } else if (tabId === 'doa_ratib') {
+      renderDoaRatibSection();
     } else if (tabId === 'yasin') {
       renderQuranSection(YAROSUL_DATA.yasin, 'Surat Yasin', 'سُوْرَةُ يٰسٓ', '83 Ayat - Makkiyyah', 6);
     } else if (tabId === 'waqiah') {
@@ -618,7 +957,7 @@ document.addEventListener('DOMContentLoaded', () => {
     hero.innerHTML = `
       <div class="hero-arabic-title">رَاتِبُ الْحَدَّادِ</div>
       <div class="hero-title">Ratibul Haddad Lengkap</div>
-      <div class="hero-desc">Disusun oleh Al-Imam Quthbil Irsyad Al-Habib Abdullah bin Alawi Al-Haddad RA</div>
+      <div class="hero-desc">Disusun oleh Al-Imam Quthbil Irsyad Al-Habib Abdullah bin Alawi Al-Haddad RA (Hal 26 - 41)</div>
     `;
     digitalContentArea.appendChild(hero);
 
@@ -627,7 +966,9 @@ document.addEventListener('DOMContentLoaded', () => {
     bismillah.innerHTML = `<div class="bismillah-text">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>`;
     digitalContentArea.appendChild(bismillah);
 
-    YAROSUL_DATA.ratib.forEach((item, index) => {
+    // Filter main ratib items r1 to r26
+    const ratibItems = YAROSUL_DATA.ratib.filter(item => item.id !== 'r27' && item.id !== 'r28');
+    ratibItems.forEach((item, index) => {
       const card = document.createElement('div');
       card.className = 'item-card';
       card.id = `ratib_card_${item.id}`;
@@ -720,7 +1061,49 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 2. Quran Surah Section (Yasin & Al-Waqi'ah)
+  // 2. Doa Ratibul Haddad Lengkap Section (Hal 42 - 45)
+  function renderDoaRatibSection() {
+    const hero = document.createElement('div');
+    hero.className = 'section-hero-card';
+    hero.innerHTML = `
+      <div class="hero-arabic-title">دُعَاءُ رَاتِبِ الْحَدَّادِ</div>
+      <div class="hero-title">Doa Ratibul Haddad & Penutup</div>
+      <div class="hero-desc">Doa Munajat, Permohonan Ridha & Shalawat Penutup (Buku Hal 42 - 45)</div>
+    `;
+    digitalContentArea.appendChild(hero);
+
+    const bismillah = document.createElement('div');
+    bismillah.className = 'bismillah-card';
+    bismillah.innerHTML = `<div class="bismillah-text">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>`;
+    digitalContentArea.appendChild(bismillah);
+
+    const doaItems = YAROSUL_DATA.ratib.filter(item => item.id === 'r27' || item.id === 'r28');
+    doaItems.forEach((item, index) => {
+      const card = document.createElement('div');
+      card.className = 'item-card';
+      card.id = `doa_card_${item.id}`;
+      card.innerHTML = `
+        <div class="card-header-row">
+          <div class="card-num-badge">${index === 0 ? '🤲' : '✨'}</div>
+          <div class="card-title-text" style="font-size:15px; font-weight:800; color:var(--color-primary);">${item.title}</div>
+          <div class="card-page-link" data-page="${item.page}">
+            📄 Hal ${item.page}
+          </div>
+        </div>
+        <div class="arabic-box" style="font-size:calc(var(--arabic-size) * 1.05);">${item.arabic.replace(/\n/g, '<br><br>')}</div>
+        <div class="latin-box">${item.latin.replace(/\n/g, '<br><br>')}</div>
+        <div class="trans-box">${item.translation.replace(/\n/g, '<br><br>')}</div>
+      `;
+      card.querySelector('.card-page-link').addEventListener('click', (e) => {
+        const page = parseInt(e.currentTarget.dataset.page);
+        switchMode('book');
+        loadBookPage(page, true);
+      });
+      digitalContentArea.appendChild(card);
+    });
+  }
+
+  // 3. Quran Surah Section (Yasin & Al-Waqi'ah with Murottal Audio)
   function renderQuranSection(surahData, titleLatin, titleArabic, desc, startPage) {
     const hero = document.createElement('div');
     hero.className = 'section-hero-card';
@@ -731,6 +1114,31 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
     digitalContentArea.appendChild(hero);
 
+    // Audio Player Card
+    const audioCard = document.createElement('div');
+    audioCard.className = 'audio-player-card';
+    audioCard.innerHTML = `
+      <div class="audio-header-row">
+        <div class="audio-reciter-tag">
+          <span>🎙️</span> Syaikh Misyari Rasyid
+        </div>
+        <div style="font-size:11px; opacity:0.8;">Audio Online Murottal</div>
+      </div>
+      <div class="audio-controls-row">
+        <button class="audio-main-play-btn" id="surahMainPlayBtn" title="Putar Murottal Lengkap">
+          ▶
+        </button>
+        <div class="audio-info-col">
+          <div class="audio-track-title">${titleLatin} (${titleArabic})</div>
+          <div class="audio-track-status" id="surahAudioStatus">Murottal: Ketuk ▶ untuk dengarkan lengkap</div>
+        </div>
+      </div>
+    `;
+    digitalContentArea.appendChild(audioCard);
+    audioCard.querySelector('#surahMainPlayBtn').addEventListener('click', () => {
+      toggleFullSurahAudio(surahData, titleLatin);
+    });
+
     const bismillah = document.createElement('div');
     bismillah.className = 'bismillah-card';
     bismillah.innerHTML = `<div class="bismillah-text">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>`;
@@ -740,13 +1148,19 @@ document.addEventListener('DOMContentLoaded', () => {
       surahData.ayat.forEach((verse) => {
         const card = document.createElement('div');
         card.className = 'item-card';
+        card.id = `verse_card_${verse.nomorAyat}`;
+
+        const verseAudioUrl = verse.audio ? (verse.audio['05'] || verse.audio['01']) : null;
 
         card.innerHTML = `
           <div class="card-header-row">
             <div class="card-num-badge">${verse.nomorAyat}</div>
             <div class="card-title-text">Ayat ${verse.nomorAyat}</div>
-            <div class="card-page-link" data-page="${startPage}">
-              📖 Buka di Buku
+            <div style="display:flex; align-items:center; gap:6px;">
+              ${verseAudioUrl ? `<button class="verse-audio-btn" data-audio="${verseAudioUrl}" title="Putar audio ayat ini">▶ 🔊</button>` : ''}
+              <div class="card-page-link" data-page="${startPage}">
+                📖 Buku
+              </div>
             </div>
           </div>
           <div class="arabic-box">${verse.teksArab}</div>
@@ -754,7 +1168,15 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="trans-box">${verse.teksIndonesia}</div>
         `;
 
+        if (verseAudioUrl) {
+          const verseBtn = card.querySelector('.verse-audio-btn');
+          verseBtn.addEventListener('click', () => {
+            playVerseAudio(verse.nomorAyat, verseAudioUrl, card, verseBtn);
+          });
+        }
+
         card.querySelector('.card-page-link').addEventListener('click', () => {
+          stopAllAudio();
           switchMode('book');
           loadBookPage(startPage, true);
         });
@@ -1467,8 +1889,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function openShareModal() {
     if (shareModal) {
-      shareModal.classList.add('active');
-      document.body.classList.add('modal-open');
+      openModal(shareModal);
       if (shareUrlDisplay) shareUrlDisplay.textContent = APP_URL;
       // Generate QR code only once
       if (!qrGenerated && qrCodeCanvas && typeof QRCode !== 'undefined') {
@@ -1500,12 +1921,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (headerShareBtn) {
     headerShareBtn.addEventListener('click', () => {
-      // Close settings modal if open
-      const settingsModal = document.getElementById('settingsModal');
-      if (settingsModal && settingsModal.classList.contains('active')) {
-        settingsModal.classList.remove('active');
-        document.body.classList.remove('modal-open');
-      }
+      closeModals();
       openShareModal();
       triggerHaptic('tap');
     });
@@ -1520,12 +1936,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (shareQrBtn) {
     shareQrBtn.addEventListener('click', () => {
-      // Close settings, open share modal
-      const settingsModal = document.getElementById('settingsModal');
-      if (settingsModal && settingsModal.classList.contains('active')) {
-        settingsModal.classList.remove('active');
-        document.body.classList.remove('modal-open');
-      }
+      closeModals();
       openShareModal();
       triggerHaptic('tap');
     });
