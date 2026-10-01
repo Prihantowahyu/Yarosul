@@ -281,12 +281,6 @@ html, body {
   background-color: #fff;
 }
 
-/* Zoom controls overlay */
-.book-overlay-tools {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  display: flex;
 /* ==========================================================================
    ENHANCED READER CONTROLS (COLLAPSIBLE, ZERO OBSTRUCTION)
    ========================================================================== */
