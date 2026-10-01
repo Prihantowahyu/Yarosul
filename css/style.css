@@ -286,39 +286,40 @@ html, body {
    ========================================================================== */
 .book-overlay-tools {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  bottom: 12px;
+  left: 12px;
   z-index: 30;
   display: flex;
-  align-items: center;
+  flex-direction: row;
+  align-items: flex-end;
   gap: 6px;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Collapsed Toggle Button */
 .tool-toggle-btn {
-  background: rgba(13, 36, 28, 0.78);
+  background: rgba(13, 36, 28, 0.85);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(212, 175, 55, 0.4);
-  color: #fff;
+  border: 1.5px solid rgba(212, 175, 55, 0.55);
+  color: var(--color-gold-light);
   border-radius: var(--radius-full);
-  padding: 6px 12px;
+  padding: 7px 14px;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.3px;
   display: flex;
   align-items: center;
   gap: 5px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
   cursor: pointer;
   transition: all 0.25s ease;
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 .tool-toggle-btn:hover, .tool-toggle-btn:active {
   opacity: 1;
-  background: rgba(13, 59, 46, 0.95);
+  background: rgba(13, 59, 46, 0.97);
   border-color: var(--color-gold);
   transform: scale(1.04);
 }
@@ -335,22 +336,22 @@ html, body {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 6px;
-  background: rgba(13, 36, 28, 0.92);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--color-gold);
+  justify-content: flex-start;
+  gap: 5px;
+  background: rgba(10, 28, 22, 0.94);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1.5px solid rgba(212, 175, 55, 0.65);
   border-radius: var(--radius-full);
-  padding: 4px 6px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-  animation: toolFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  padding: 5px 8px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.55);
+  animation: toolFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes toolFadeIn {
   from {
     opacity: 0;
-    transform: translateY(-8px) scale(0.96);
+    transform: translateY(10px) scale(0.96);
   }
   to {
     opacity: 1;

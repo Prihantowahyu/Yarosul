@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     currentPage: parseInt(localStorage.getItem('yarosul_last_page')) || 1,
     digitalTab: localStorage.getItem('yarosul_digital_tab') || 'ratib', // 'ratib' | 'yasin' | 'waqiah' | 'fadhilah' | 'pengantar'
     zoomLevel: 1.0,
+    isFullscreen: false,
     theme: localStorage.getItem('yarosul_theme') || 'emerald',
     soundEnabled: localStorage.getItem('yarosul_sound') !== 'false',
     vibrateEnabled: localStorage.getItem('yarosul_vibrate') !== 'false',
@@ -768,41 +769,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Center tap on book canvas in fullscreen toggles Zen mode (hides bottom scrubber)
-  canvasArea.addEventListener('click', (e) => {
-    if (e.target.closest('.tap-zone') || e.target.closest('.book-overlay-tools') || state.zoomLevel > 1.0) {
-      return;
-    }
-    const rect = canvasArea.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    if (clickX >= rect.width * 0.25 && clickX <= rect.width * 0.75) {
-      if (document.body.classList.contains('fullscreen-mode')) {
-        document.body.classList.toggle('hide-book-controls');
-        const isHidden = document.body.classList.contains('hide-book-controls');
-        showToast(isHidden ? 'Mode Zen: Kontrol disembunyikan' : 'Kontrol ditampilkan');
-        triggerHaptic('tap');
-      }
-    }
-  });
+  // (Zen mode / hide-book-controls handled by the primary click listener above)
 
   bookRange.addEventListener('input', (e) => {
     loadBookPage(parseInt(e.target.value));
   });
 
-  // ==========================================
-  // Mode 2: Digital Text & Interactive Tasbih
-  // ==========================================
-  function switchDigitalTab(tabId) {
-    state.digitalTab = tabId;
-    localStorage.setItem('yarosul_digital_tab', tabId);
-
-    document.querySelectorAll('.tab-pill').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.tab === tabId);
-    });
-
-    renderDigitalContent(tabId);
-    digitalContentArea.scrollTop = 0;
-  }
+  // (switchDigitalTab is defined below with audio stop logic)
 
   // ==========================================
   // Audio Controller (Online Murottal & Ayat Streaming)
