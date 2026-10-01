@@ -1,14 +1,18 @@
-// YA ROSUL - Progressive Web App Service Worker (v6)
-const CACHE_NAME = 'yarosul-pwa-v6';
+// YA ROSUL - Progressive Web App Service Worker (v7)
+const CACHE_NAME = 'yarosul-pwa-v7';
 
-const STATIC_CORE = [
-  './',
+// Core app files - always try network first so updates are instant
+const CORE_FILES = [
   './index.html',
   './css/style.css',
   './js/app.js',
   './js/qrcode.min.js',
   './data/content.js',
   './manifest.json',
+];
+
+// Static assets that rarely change
+const STATIC_ASSETS = [
   './assets/icons/favicon.png',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png'
@@ -20,15 +24,16 @@ for (let i = 1; i <= 48; i++) {
   PAGE_ASSETS.push(`./assets/pages/page_${i}.webp`);
 }
 
-const ALL_ASSETS = [...STATIC_CORE, ...PAGE_ASSETS];
+const ALL_ASSETS = [...CORE_FILES, ...STATIC_ASSETS, ...PAGE_ASSETS];
 
 // Install Event
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(async cache => {
-      // Cache core assets first
+      // Cache core files
       try {
-        await cache.addAll(STATIC_CORE);
+        await cache.addAll(CORE_FILES);
+        await cache.addAll(STATIC_ASSETS);
       } catch (err) {
         console.warn('Failed to cache some core assets', err);
       }
@@ -48,6 +53,7 @@ self.addEventListener('activate', event => {
       return Promise.all(
         keys.map(key => {
           if (key !== CACHE_NAME) {
+            console.log('[SW] Deleting old cache:', key);
             return caches.delete(key);
           }
         })
@@ -57,24 +63,51 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Fetch Strategy: Cache First, fallback to Network
+// Fetch Strategy:
+// - Core files (HTML/CSS/JS): Network First → fallback to cache
+// - Page images: Cache First → fallback to network (saves bandwidth)
 self.addEventListener('fetch', event => {
-  // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
   const url = new URL(event.request.url);
+  const pathname = url.pathname;
 
-  // Handle Google Fonts or same-origin requests
+  // Network-first for core app files (ensures updates are always seen)
+  const isCoreFile = CORE_FILES.some(f => pathname.endsWith(f.replace('./', '/')));
+
+  if (isCoreFile || event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then(networkResponse => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(event.request, responseClone);
+            });
+          }
+          return networkResponse;
+        })
+        .catch(() => {
+          // Offline fallback: serve from cache
+          return caches.match(event.request).then(cached => {
+            return cached || caches.match('./index.html');
+          });
+        })
+    );
+    return;
+  }
+
+  // Cache-first for images and other static assets
   event.respondWith(
     caches.match(event.request).then(cachedResponse => {
       if (cachedResponse) {
         return cachedResponse;
       }
-
       return fetch(event.request).then(networkResponse => {
-        // Cache external fonts or dynamic assets
         if (networkResponse && networkResponse.status === 200) {
-          if (url.origin === location.origin || url.hostname.includes('googleapis.com') || url.hostname.includes('gstatic.com')) {
+          if (url.origin === location.origin ||
+              url.hostname.includes('googleapis.com') ||
+              url.hostname.includes('gstatic.com')) {
             const responseClone = networkResponse.clone();
             caches.open(CACHE_NAME).then(cache => {
               cache.put(event.request, responseClone);
@@ -83,7 +116,6 @@ self.addEventListener('fetch', event => {
         }
         return networkResponse;
       }).catch(() => {
-        // Fallback for document navigation
         if (event.request.mode === 'navigate') {
           return caches.match('./index.html');
         }
